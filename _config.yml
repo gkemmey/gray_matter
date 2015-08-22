@@ -27,10 +27,10 @@ author:
 # Custom vars
 version:             2.0.0
 github:
-  repo:              https://github.com/gkemmey/blog
+  repo:              https://github.com/gkemmey/gray_kemmey
 
 # links for the header
-main_site:           http://www.graykemmey.com
+main_site:           http://blog.graykemmey.com
 pages_list:
   Blog:              http://blog.graykemmey.com
   Archive:           /archive
