@@ -2,7 +2,7 @@
 layout: post
 title: How the Walking Dead Applies to the Syrian Refugees
 permalink: how-the-walking-dead-applies-to-the-syrian-refugees
-published: true
+published: false
 ---
 
 I love "The Walking Dead". I just re-binge watched Seasons 1-5 with my wife, and will probably purchase
