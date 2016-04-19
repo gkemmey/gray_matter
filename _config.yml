@@ -1,46 +1,18 @@
+# Dependencies
+markdown:         kramdown
+highlighter:      rouge
+
 # Permalinks
-#
-# Use of `relative_permalinks` ensures post links from the index work properly.
-permalink:           pretty
-relative_permalinks: true
+permalink:        pretty
 
 # Setup
-title:               Gray Matter
-tagline:             Gray's Blog
-url:                 http://blog.graykemmey.com
-paginate:            1
-baseurl:             ""
+title:            Gray Matter
+tagline:          'Thoughts by Gray'
+description:      'TODO - add a description'
 
-# Assets
-#
-# We specify the directory for Jekyll so we can use @imports.
-sass:
-  sass_dir:          _sass
-  style:            :compressed
-
-# About/contact
 author:
-  name:              Gray Kemmey
-  url:               https://twitter.com/gkemmey
-  email:             gray.kemmey@gmail.com
+  name:           'Gray Kemmey'
+  url:            http://graykemmey.com
 
-# Custom vars
-version:             2.0.0
-github:
-  repo:              https://github.com/gkemmey/gray_kemmey
-
-# links for the header
-main_site:           http://blog.graykemmey.com
-pages_list:
-  Blog:              http://blog.graykemmey.com
-  Archive:           /archive
-  Feed:              /atom.xml
-  About:             /about
-
-defaults:
-  -
-    scope:
-      path: "" # an empty string here means all files in the project
-      type: "posts"
-    values:
-      comments: true
+gems:             ['jekyll-paginate', 'jekyll-gist']
+paginate:         5

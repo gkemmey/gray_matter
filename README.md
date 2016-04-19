@@ -6,4 +6,4 @@ The following directories and their contents are Copyright Gray Kemmey. You may 
 - public/
 
 ## Poole
-This site is built with the amazing [Poole](https://github.com/poole/poole).
+This site is built with [Hyde](https://github.com/poole/hyde).
