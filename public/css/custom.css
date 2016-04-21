@@ -1,0 +1,19 @@
+/* code */
+
+/* poole/hyde was built expecting liquid code blocks to resove to div.highlight, so we were getting
+   som bad default styling for figure elements from the browser */
+figure {
+  margin: 0rem;
+}
+
+pre {
+  /* don't wrap code, overflow it */
+  overflow: auto;
+  overflow-y: hidden;
+  word-break: normal;
+  word-wrap: normal;
+  white-space: pre;
+  
+  /* slightly smaller font to give us more room in code blocks */
+  font-size: .7rem;
+}
