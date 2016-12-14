@@ -13,7 +13,16 @@ pre {
   word-break: normal;
   word-wrap: normal;
   white-space: pre;
-  
+
   /* slightly smaller font to give us more room in code blocks */
   font-size: .7rem;
+}
+
+/* use the space that's available for content */
+.container {
+  max-width: none !important;
+}
+
+.content {
+  max-width: none !important;
 }
