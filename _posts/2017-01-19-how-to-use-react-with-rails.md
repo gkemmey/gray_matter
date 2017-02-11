@@ -6,7 +6,7 @@ published: true
 
 ### First Things First; What Not to Do
 
-A simple search for "react + rails" will turn up the [react-rails](https://github.com/reactjs/react-rails) gem immediately. It's a first party gem you can drop into your rails app and get going immediately. It does a couple things:
+A simple search for "react + rails" will turn up the [react-rails](https://github.com/reactjs/react-rails) gem immediately. It's a first party gem you can drop into your rails app and get going quickly. It does a couple things:
 
 1. It vendors React and a custom React UJS library for use with the Rails asset pipeline.
 
@@ -26,7 +26,7 @@ class MyComponent extends React.Component
 }
 {% endhighlight %}
 
-And that works for a while, until you want to start writing Javascript like the rest of the world, something like:
+And that works for a while, until you want to start writing Javascript like the rest of the world. Something like:
 
 {% highlight javascript %}
 import { DopeLibrary } from 'some_awesome_npm_thing'
@@ -40,7 +40,7 @@ export default MyComponent;
 
 Sssssshhhhhhhiiiiiiitttttt...how do I import npm libraries...? 🤔 Answer: you have to to use npm.
 
-`react-rails` isn't all bad, though. Remember that React UJS library I mentioned? Turns out that thing is pretty sweet. It lets us write code like this:
+`react-rails` isn't all bad, though. Remember that React UJS library I mentioned? Turns out that thing is pretty sweet. It lets us write views like this:
 
 {% highlight erb %}
 <div>
@@ -50,17 +50,17 @@ Sssssshhhhhhhiiiiiiitttttt...how do I import npm libraries...? 🤔 Answer: you 
 <%= react_component 'MyComponent', props, html_options %>
 {% endhighlight %}
 
-This works by rendering a `<div>` with a bunch of data attributes that represents the component to mount and the props to pass to it. Then the React UJS library listens for the appropriate turbolinks and/or `$(document).ready` equivalents, and uses ReactDOM to render our component at that time.
+This works by rendering a `<div>` with a bunch of data attributes that represents the component to mount and the props to pass to it. Then the React UJS library listens for the appropriate turbolinks events and `$(document).ready` equivalents, and uses ReactDOM to render our component at that time.
 
-The upside to this, we can easily mix our normal Rails views with our React components. The downside, React UJS expects React, ReactDOM, and any components rendered with `react_component` to be defined globally.
+The upside to this is we can easily mix our normal Rails views with our React components. The downside, though, is React UJS expects React, ReactDOM, and any components rendered with `react_component` to be defined globally.
 
 ### So What Should We Do?
 
-So we know we need to use npm because there isn't a gem for a good portion of libraries we may want to use. But how do we make that work with Rails? The answer is to use sprockets in conjunction with webpack and npm.
+So we know we need to use npm because there isn't a gem for a good portion of libraries we may want to use. But how do we make that work with Rails?
 
 We don't want to ditch sprockets, or even gem bundled assets, completely. Rails ❤️ sprockets. The asset pipeline has great support for things like bootstrap, jquery, tubolinks, asset hashing--why throw all that away? So what we can do is use webpack to create a bundle of _some_ of our assets, and pass that bundle to our asset pipeline.
 
-I built a version of the [TodoMVC](http://todomvc.com/) app using Rails, React, and Redux that you can see [running here](https://gray-matter-todomvc.herokuapp.com/) and the [code here](https://github.com/gkemmey/todomvc_react_rails).
+As an example for how to do this, I built a version of the [TodoMVC](http://todomvc.com/) app using Rails, React, and Redux that you can see [running here](https://gray-matter-todomvc.herokuapp.com/) and the [code here](https://github.com/gkemmey/todomvc_react_rails). We'll use code samples from that application in what follows.
 
 #### Get Your System Ready
 
@@ -97,6 +97,8 @@ yarn add --dev babel-core babel-loader babel-polyfill babel-preset-es2015 \
 yarn add react react-dom react-redux redux whatwg-fetch
 ```
 
+That first line is basically a handful of libraries webpack needs. The second line are libraries our application actually uses.
+
 #### The Directory Structure
 
 As a reference, here's a look at what my `assets/javascripts` directory looks like:
@@ -118,7 +120,7 @@ The biggest difference is we've added a `webpack` subfolder to put our javascrip
 //= require fetch_bundle
 {% endhighlight %}
 
-Pretty normal, but hey, what's `react_ujs` still doing there?! We're still going to use it! In fact, we still install the `react-rails` gem. This gives us access to the `render_component` helper, and  bundled version of the `react_ujs` library we can include in our `application.js`. But we're not using it to include React.
+Pretty normal, but hey, what's `react_ujs` still doing there?! We're still going to use it! In fact, we still install the `react-rails` gem. This gives us access to the `render_component` helper, and a bundled version of the `react_ujs` library we can include in our `application.js`. But we're **not** using it to include React.
 
 #### webpack.config.js
 
@@ -155,7 +157,7 @@ let allFilesIn = function(dir) {
 };
 {% endhighlight %}
 
-Because I'm a rails guy through and through, I prefer snakecase for files and variables, and camelcase for classes. So the `camelize` allows us to pass a string like `'todos_list'` and get back `'TodosList'`. `filename` take a path and gets just the filename without the extension. And `allFilesIn` will get all the files in a folder, recursively. We'll use these functions in the next section:
+Because I'm a rails guy through and through, I prefer snakecase for files and variables, and camelcase for classes. So the `camelize` allows us to pass a string like `'todos_list'` and get back `'TodosList'`. `filename` takes a path and gets just the filename without the extension. And `allFilesIn` will get all the files in a folder, recursively. We'll use these functions in the next section:
 
 {% highlight javascript %}
 let components = allFilesIn(__dirname + "/app/assets/javascripts/webpack/root_components/").
@@ -197,7 +199,7 @@ let config = {
 module.exports = config;
 {% endhighlight %}
 
-We add two entry files: one for the fetch polyfill, stolen directly from [their documentation](https://github.com/github/fetch), and one for application. We specify where we want our bundled files outputted with the `output` object. And then we define our loaders. This is just an array of objects that represent a loader, at a minimum they have a `test` property which we use to match files to process and a `loader` property, which says which loader to use. So we take our `components` list and concatenate it with the [babel loader](https://github.com/babel/babel-loader). This will run against any of our `.js` files or `.jsx` files under the `include` path, or or `assets/javsacripts/webpack` folder.
+We add two entry files: one for the fetch polyfill, copied directly from [their documentation](https://github.com/github/fetch), and one for our application. We specify where we want our bundled files outputted with the `output` object. And then we define our loaders. This is just an array of objects that represent a loader. At a minimum they have a `test` property which we use to match files to process, and a `loader` property, which says which loader to use. So we take our `components` list and concatenate it with the [babel loader](https://github.com/babel/babel-loader). This will run against any of our `.js` files or `.jsx` files under the `include` path, or or `assets/javsacripts/webpack` folder. This allows us to write ES6 and JSX code and have it transpiled to Javascript the browser can understand.
 
 #### application_entry.js
 
@@ -222,7 +224,7 @@ We can run webpack in development and watch modes with
 webpack -d --watch --config webpack.config.js
 ```
 
-This will re-generate our bundle files if we make changes to our javascript files. We needn't mess with any of the hot reloading features of webpack because rails and sprockets will grab those changes in development when we refresh our page. In fact, aside from running the above webpack command, we needn't change our normal Rails development workflow at all.
+This will re-generate our bundle files if we make changes to our Javascript files. We needn't mess with any of the hot reloading features of webpack because Rails and sprockets will grab those changes in development when we refresh our page. In fact, aside from running the above webpack command, we needn't change our normal Rails development workflow at all.
 
 ### Conclusion
 
@@ -251,4 +253,4 @@ But perhaps the best part, we're able to do all that without giving up the thing
 
 And we get to use React as a first-class citizen, with access to the modern Javascript libraries are using, whether that be Redux or React extensions or testing libraries.
 
-I know webpack is [anything but simple](https://twitter.com/thomasfuchs/status/708675139253174273?lang=en), but hopefully that wasn't too terrible.
+I know webpack is [anything but simple](https://twitter.com/thomasfuchs/status/708675139253174273?lang=en), but hopefully that wasn't too terrible. Again, you can see this setup running a TodoMVC implementation [here](https://gray-matter-todomvc.herokuapp.com/), and the code [here](https://github.com/gkemmey/todomvc_react_rails).
