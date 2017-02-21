@@ -4,6 +4,10 @@ title: 'How to Use React with Rails'
 published: true
 ---
 
+<div style="font-style: italic;" markdown="1">
+This post covers setting up with webpack 1.14.0, however the implementation doesn't change much for webpack 2. There's a follow up post [here]({{ site.github.url }}/2017/02/20/upgrading-to-webpack-2/) that covers those changes, though I recommend reading this one first.
+</div>
+
 ### First Things First; What Not to Do
 
 A simple search for "react + rails" will turn up the [react-rails](https://github.com/reactjs/react-rails) gem immediately. It's a first party gem you can drop into your rails app and get going quickly. It does a couple things:
