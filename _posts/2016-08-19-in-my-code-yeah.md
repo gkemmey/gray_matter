@@ -22,16 +22,16 @@ Let's look at some examples from codebases I'm juggling at work right now:
 class Compass::History::Loan < Compass::Connection
   self.table_name = "KWHLOAN"
 
-  # i'm not _entirely_ sure of the structure here, but it looks to me like a 
-  # KWHLOAN can be associated with exactly one KWHBASE row when both the HSEQ 
+  # i'm not _entirely_ sure of the structure here, but it looks to me like a
+  # KWHLOAN can be associated with exactly one KWHBASE row when both the HSEQ
   # and HDATE columns are equal. in other words:
   #
   # SELECT * FROM KWHBASE INNER JOIN KWHLOAN ON KWHBASE.HDATE = KWHLOAN.HDATW AND
   #                                             KWHBASE.HSEQ = KWHLOAN.HSEQ;
   #
   # we're replicating that as a has_one association by making the HDATE column
-  # the primary key and adding conditions for the HSEQ portion. that's a 
-  # little misleading because technically there is no primary/foreign key 
+  # the primary key and adding conditions for the HSEQ portion. that's a
+  # little misleading because technically there is no primary/foreign key
   # associating these two tables 😪
   has_one :past_payment, ->(loan) {
     where(hseq: loan.hseq)
@@ -77,6 +77,6 @@ end
 
 This defines a quick helper method that lets us know if we should alert a user based on his alert settings and the type of alert we're processing. But, of course, `type` and `user.alerts_type` don't use the same verbiage so we have this complicated `case` checking. Me being me, I added some sarcastic text explaining this, and my personal "wtf?!" face emoji.
 
-Normal prose has both voice and style. I think style comes pretty naturally when writing code. Whether good or bad, most developers have style in their code. How they indent things, when they comment, what constructs they use to do X vs Y, those are all part of a coder's style. But I don't think voice comes through as evidently. Emoji's add the voice. They your code more personal and ultimately more enjoyable to read.
+Normal prose has both voice and style. I think style comes pretty naturally when writing code. Whether good or bad, most developers have style in their code. How they indent things, when they comment, what constructs they use to do X vs Y, those are all part of a coder's style. But I don't think voice comes through as evidently. Emoji's add the voice. They make your code more personal, and ultimately more enjoyable to read.
 
 If you're sold, [here](https://packagecontrol.io/packages/Emoji) is the emoji plugin I use with Sublime Text 3 which makes it super easy to search for and insert emojis. Here's hoping we see more 😁's and 💯's than 😑's in our comments!
