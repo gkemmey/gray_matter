@@ -14,5 +14,5 @@ author:
   name:           'Gray Kemmey'
   url:            http://graykemmey.me
 
-gems:             ['jekyll-paginate', 'jekyll-gist']
+plugins:          ['jekyll-paginate', 'jekyll-gist']
 paginate:         5
