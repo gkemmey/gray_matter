@@ -7,7 +7,7 @@ published: true
 Generate an RFC 4122 compliant UUID: Ruby
 
 {% highlight ruby %}
-require 'securerandom' # maybe, if you're using Rails you never have to write these
+require 'securerandom' # at worst, if you're using Rails you won't have to write this
 SecureRandom.uuid
 {% endhighlight %}
 
@@ -25,4 +25,4 @@ const uuid() = function() {
 }
 {% endhighlight %}
 
-This sucks, I don't want to be responsible for generating UUIDs. Or making sure they adhere to the RFC. (Or understanding even understanding it.) Or making sure they're performant. Or make my team read that code. I want my language to handle stuff like that :angry:
+This sucks, I don't want to be responsible for generating UUIDs. Or making sure they adhere to the RFC. (Or even understanding it.) Or making sure they're performant. Or make my team read that code. I want my language to handle stuff like that 😡
