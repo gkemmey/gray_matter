@@ -1,3 +1,26 @@
+/* global */
+@media (min-width: 38em) {
+  html {
+    font-size: 16px; /* poole set this to 20 */
+  }
+}
+
+@media (min-width: 48em) {
+  html {
+    font-size: 16px;
+  }
+}
+@media (min-width: 58em) {
+  html {
+    font-size: 16px; /* hyde set this to 20 */
+  }
+}
+
+/* sidebar (will conflict if you flip to a themed option) */
+.sidebar {
+  background-color: #282a36; /* matches dracula background */
+}
+
 /* code */
 
 /* poole/hyde was built expecting liquid code blocks to resove to div.highlight, so we were getting
@@ -13,16 +36,21 @@ pre {
   word-break: normal;
   word-wrap: normal;
   white-space: pre;
-
-  /* slightly smaller font to give us more room in code blocks */
-  font-size: .7rem;
 }
 
-/* use the space that's available for content */
-.container {
-  max-width: none !important;
+code {
+  color: #ff79c6;
+  background-color: #f9f9ff
 }
 
-.content {
-  max-width: none !important;
+/* content */
+
+.container, .content {
+  max-width: none;
+}
+
+@media (min-width: 48em) {
+  .content, .container {
+    max-width: 43rem;
+  }
 }
