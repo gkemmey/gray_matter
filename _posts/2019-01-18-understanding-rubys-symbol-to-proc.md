@@ -4,7 +4,7 @@ title: "Understanding Ruby's :symbol.to_proc"
 published: true
 ---
 
-At work, someone posted this code to our #rails channel and asked if there's was more ruby way to skip the re-assigning of `@employees`, maybe using `yield_self`:
+At work, someone posted this code to our #rails channel and asked if there's a more ruby way to skip the re-assigning of `@employees`, maybe using `yield_self`:
 
 {% highlight ruby %}
 class EmployeesController < ApplicationController
@@ -85,7 +85,7 @@ Anyway, I didn't have a super satisfactory answer to all those questions. I just
 
 ---
 
-☝️ All that's sort of the premise / some context. Here's we'll flip to some simpler examples you can run right in irb.
+☝️ All that's sort of the premise / some context. Here we'll flip to some simpler examples you can run right in irb.
 
 Suppose we've defined an `apply_filter` method like so:
 
