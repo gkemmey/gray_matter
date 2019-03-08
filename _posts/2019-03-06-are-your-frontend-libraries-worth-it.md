@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Making a Case (long-winded) for Turbolinks"
+title: "Making a (Long-winded) Case for Turbolinks"
 published: true
 ---
 
@@ -559,7 +559,7 @@ And the HTML:
                                                 'submit_form_when_blurred',
                                                 'cancel_edit_on_escape'
                                               ].join(' ') %>">
-    <!-- and our other handlers on the input  ☝️ -->
+    <!-- and our other handlers on the input  👆 -->
   </form>
 </li>
 ```
@@ -657,6 +657,147 @@ But we pay price for that simplicity. Perhaps most notably is we round-trip to t
 All that said, hold on to this version of our app, we're gonna come back to it. But first let's move it back into 2019.
 
 ## React
+
+What better way to do that than rewriting _what we just wrote_ to run on the client? I'll probably skip over quite a bit. This isn't a React tutorial at all. That first section was a little tutorial-y, but since we so rarely write apps that way anymore, I wanted to draw special attention to that setup. Here I just want to look at some of complexity we add as we move logic to the frontend.
+
+### Build Tooling
+
+I don't want to beat on a long since dead horse, but Jesus, why is this so difficult? I could have used `create-react-app`, but it runs its own Express server, so then I'm stuck telling it to proxy requests back to the one we just built and running `yarn start` twice. That's fucking gross.
+
+[Here's](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/Rakefile) what I did instead. I think it's cool. I might be the only one.
+
+Anyway, enough on that.
+
+### No more HTML
+
+We don't write that anymore. Here's what our server will render instead:
+
+```html
+<!-- app/views/index.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" media="all" href="<%= manifest['application.css'] %>">
+    <script type="text/javascript" src="<%= manifest['todos.js'] %>" defer></script>
+    <!-- 👆 don't worry about this manifest bit, it's our css file and our react stuffs -->
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+```
+
+Cool. Here's the JavaScript we'll send to fill that `#root` element client-side:
+
+```js
+// app/assets/javascript/todos/index.js
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter as Router } from "react-router-dom";
+
+import App from './App';
+
+document.addEventListener('DOMContentLoaded', () => {
+  ReactDOM.render(
+    <Router>
+      <App />
+    </Router>,
+    document.getElementById('root')
+  )
+})
+```
+
+### We've now gotta sync todos
+
+The source of truth for our users' todos is undoubtedly our database. If it's not in there, it doesn't exist. Back when we were just letting the server render templated HTML, we could just read from the database directly before we processed the template. Once we move rendering to the client, we don't really control the timing in the same way anymore, and we now have to juggle two data stores: what exists in the database and what our client-side app knows about.
+
+So what do we have to juggle? Well first, we have to determine how we load todos initially. And second, how we handle updating todos. There's a range of things we now have to decide like what do we render while todos are loading? How do we load our initial list of todos? When a user updates a todo, how do we render that -- for a moment our local copy of todos is more up to date than our databases? We've gotta send those updates to the server, but that's an async process -- should we render what we got and reconcile any differences after attempting update?
+
+For this app, we'll try and keep things simple:
+
+1. We'll fetch todos from the server as soon as our app renders. While it's loading we'll count it as there being no todos.
+2. Whenever we perform an update, we'll send that request to the server, and on a successful response from the server, we'll refetch _all_ the todos.
+
+So let's change our GET `/` to support that:
+
+```js
+// app/controllers/index.js
+
+router.get('/', function(req, res) {
+  if (req.accepts('json') && !req.accepts('text/html')) {
+    var query = { where: { sessionUserId: req.session.userId } }
+    var filtering = !(req.query.completed === null || req.query.completed === undefined)
+
+    if (filtering) {
+      query.where.completed = req.query.completed === "true"
+    }
+
+    models.Todo.
+      findAll(query).
+      then(function(todos) {
+        res.header('Content-Type', 'application/json');
+        res.send({ todos: todos });
+      })
+  }
+  else {
+    res.render('index')
+  }
+})
+```
+
+So if we hit `/` with a GET request looking for HTML (as determined by an ACCEPT header), we'll send back that HTML with just the `div#root`, otherwise if he hit that same endpoint looking for JSON, we'll send our todos as a JSON.
+
+That's not simpler...and the Reacts:
+
+```js
+// app/assets/javascript/todos/App.js
+
+const App = ({ location: { search } }) => {
+  const [cacheKey, setCacheKey] = useState(uuid())
+  const refresh = () => { setCacheKey(uuid()) }
+  const [todos, setTodos] = useState([])
+
+  useEffect(() => {
+    const path = search.includes("completed") ?
+      `/?completed=${search.includes("completed=true")}`:
+      '/'
+
+    get(path).
+      then((res) => { if (res.ok) { return res.json() } }).
+      then((json) => { setTodos(json.todos) })
+  }, [search, cacheKey])
+
+  return (
+    <>
+      <section id="todoapp">
+        <header id="header">
+          <h1>todos</h1>
+          <NewTodo refresh={refresh} />
+        </header>
+
+        <section id="main">
+          <Todos todos={todos} refresh={refresh} />
+        </section>
+
+        <Footer search={search} todos={todos} refresh={refresh} />
+      </section>
+
+      <footer id="info">
+        <p>Double-click to edit a todo</p>
+        <p>Created by Gray Kemmey</p>
+        <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+      </footer>
+    </>
+  )
+}
+```
+
+LEFT OFF HERE
+
+`get` is a [light wrapper](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L17-L35) `fetch`. Communicating with the server doesn't come for free. Like it does with `forms`.
+
 
 - build tooling (skip) (was my solution genius? or cheating?)
 - we're responsible from syncing todos
