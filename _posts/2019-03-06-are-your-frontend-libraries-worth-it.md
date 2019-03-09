@@ -6,7 +6,7 @@ published: true
 
 [Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And what I'd like to do, is convince you of that as we build a simple application. But first we need a baseline, so let's party like it's 2008-ish! 🎉
 
-Not even joking a little bit here, this was the nirvana of web development. Browsers sent data to servers and servers sent back HTML. Full, round trips every time. Developers _actually_ rendered `<form>` tags. Sure, sometimes we sent a little sprinkle of JavaScript, but for any real work, we fully expected the users would send requests back to our server. Apps were largely stateless. And life was simple.
+Not even joking a little bit here, this was the nirvana of web development. Browsers sent data to servers and servers sent back HTML. Full, round-trips every time. Developers _actually_ rendered `<form>` tags. Sure, sometimes we sent a little sprinkle of JavaScript, but for any real work, we fully expected the users would send requests back to our server. Apps were largely stateless. And life was simple.
 
 For a moment, let's go back to that. Let's build a [TodoMVC](http://todomvc.com/) app like it's 2008!
 
@@ -794,9 +794,155 @@ const App = ({ location: { search } }) => {
 }
 ```
 
-LEFT OFF HERE
+We have an [effect](https://reactjs.org/docs/hooks-reference.html#useeffect) that's responsible for loading todos whenever we render and either our query filter (`search`) has changed, or our `cacheKey`. `cacheKey` is an otherwise unused piece of state that we track as a way to give our child components a way to trigger a re-render, and subsequently a re-fetching of todos. That's what `refresh` does. It's a function we can pass to children that when called will call `setCacheKey` with a new UUID.
 
-`get` is a [light wrapper](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L17-L35) `fetch`. Communicating with the server doesn't come for free. Like it does with `forms`.
+Inside our effect, we have a `get` function which is a [light wrapper](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L17-L35) around `fetch`. Because communicating with the server no longer comes for free like it does with `forms`.
+
+The React version of simple.
+
+### Rendering todos
+
+Let's look a little closer at our [`Todos`](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L113-L133) and [`Todo`](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L65-L111) components.
+
+`Todos` takes all our todos, renders the form for toggling all our todos, and iterates over each one rendering an individual `Todo` component:
+
+```js
+const Todos = ({ todos, refresh }) => {
+  // ...redacted update_many function...
+
+  return (
+    <>
+      {/* ...redacted toggle input... */}
+
+      <ul id="todos">
+        { todos.map((t) => ( <Todo key={t.id} refresh={refresh} {...t} /> )) }
+      </ul>
+    </>
+  )
+}
+```
+
+Not too horrid. Actually, a lot like what we had to do in our template before. And the `Todo`, let's take it in pieces. First the setup:
+
+```js
+const Todo = ({ id, title, completed, refresh }) => {
+  const [editing, setEditing] = useState(false)
+  const [newTitle, setNewTitle] = useState(title)
+
+  const updateTodo = (todo) => {
+    return patch(`/${id}`, { todo: todo }).then((res) => { if (res.ok) { refresh() } })
+  }
+
+  const destroyTodo = () => {
+    destroy(`/${id}`).then((res) => { if (res.ok) { refresh() }})
+  }
+
+  return // ...skipped for now...
+}
+```
+
+Each `Todo` tracks two items of state 1) whether it's being edited and 2) what the new title is. I hate the `newTitle` bit, again we gotta take over something the browser _used to do for us_ -- managing the value currently in an input. This pattern is just something we have to do in React, be it's not simpler than what we had before. In fact, React is patently bad at handling forms.
+
+But in fairness, juggling our "currently being edited" state got better. Let's add the JSX:
+
+```js
+<li className={(editing && "editing") || (completed && "completed") || ""}
+    onDoubleClick={() => { setEditing(true) }}>
+  <div className="view">
+    <input type="checkbox"
+           className="toggle"
+           value="1"
+           checked={completed}
+           onChange={(e) => { updateTodo({ completed: e.target.checked ? "1" : "0" }) }} />
+
+    <label>{title}</label>
+    <button className="destroy" onClick={destroyTodo} />
+  </div>
+
+  <input type="text"
+         id="todo_title"
+         className="edit"
+         autoComplete="off"
+         value={newTitle}
+         onChange={(e) => { setNewTitle(e.target.value) }}
+         onKeyDown={(e) => {
+           if (e.keyCode === 27) {
+             setNewTitle(title)
+             setEditing(false)
+           }
+         }}
+         onBlur={() => {
+           if (editing && title !== newTitle) {
+             updateTodo({ title: newTitle }).then(() => { setEditing(false) })
+           }
+         }}
+         ref={(input) => { input && input.focus()}} />
+</li>
+```
+
+Ok, there is admittedly an elegance to `className={editing && "editing"}` and `onDoubleClick={() => { setEditing(true) }}` 😍 Same for our destroy button -- `onClick={destroyTodo}` -- that's way better than rendering a form, with a hidden `_method=delete` input, and with a submit button. But it _should_ be. That's the whole value prop (heh, another bad joke 😬) of React!
+
+You know what didn't get better? That title input. An `onChange` handler to update our state with the value of the input? That's gross. And we need a state-plus-update-handler solution like that for every. single. thing. any of our forms collect.
+
+Also, look at that `onBlur`. We're now responsible for syncing state after we get a response form our server. Before, we could submit the form and forget, so to speak. The server was gonna tell us where to go next. Now, we're responsible for making sure the view resets post-update, both by calling `refresh()` to reset our parent's state and by calling `setEditing(false)` to rest our own. I don't love that.
+
+### Routing
+
+Or really more state and more components, it's just stored in the address bar now. Again, I'm largely gonna skip over this, but I just wanna call out this is yet another thing the browser used to handle for us. We're now responsible for keeping address bar in sync with the state of our app. How? Well first we give that state to our `App` with the `<Route>` component. And then we use these special `Link` components [here](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L153-L167) to tell the address bar and our app "Hey, update _as if_ someone had followed this link".
+
+So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
+
+## Turbolinks
+
+Full fucking circle baby! ⚫
+
+If our first implementation of our todo list is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser. And if our React version is throwing the baby out with the bath water, so to speak, and is built atop more custom client-side constructs. Turbolinks sits somewhere in the middle.
+
+If we just include it in our [head and start it](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-turbolinks-and-stimulus/app/assets/javascript/packs/application.js#L12-L13), Turbolinks will turn all of our link following into remote requests for the new HTML at that location, swap the `<body>` with the new result and merge items in new items in the `<head>`, all without reloading the page. If all we wanted to do was submit GET requests for HTML pages, Turbolinks would turn our application into single page app without us writing a single line of client-side code or adjusting our server at all.
+
+That's amazing! But...it's not all our app needs to do. So there's two things Turbolinks can't do unless we get involved:
+
+1. It can't update the address bar if following a link redirects. The remote request will silently follow the redirects, so you'll get the right HTML back, but the address bar will be out of date.
+2. It can't submit forms remotely for us, so unless we arrest some control of that process, form submission will still be full round-trips to the server.
+
+To fix #1, Turbolinks gives us a `Turbolinks-Location` header that we can set in the final response of our redirected request. To get a solution that works through any number of redirects, we'll have to store where we're redirecting to in the session, and in the route that handles that redirected request we'll look for that value in the session and if it exists write the header.
+
+Here's what that might look like for Express app (remember we already pulled in some session middleware above for the `userId`):
+
+```js
+// app/controllers/index.js
+
+router.get('/a_pointless_route_that_merely_redirects_home', function(req, res) {
+  if (req.get("Turbolinks-Referrer")) {
+    req.session.turbolinksLocation = "/"
+  }
+
+  res.redirect("/")
+})
+
+router.get('/', function(req, res) {
+  // render our normal html template
+})
+```
+
+In a route that redirects, we look for the `Turbolinks-Referrer` header because if that's set, we know Turbolinks hit this endpoint, and if we find it we go store where we're redirecting to in the session.
+
+```js
+// app.js
+
+app.use(function (req, res, next) {
+  if (req.session.turbolinksLocation) {
+    res.header("Turbolinks-Location", req.session.turbolinksLocation)
+    delete req.session.turbolinksLocation
+  }
+
+  next()
+})
+```
+
+Then we add some custom middleware to our app that for every request we handle, we look for that session value to be set, and if it is we right out the appropriate header. Ok, that solves #1.
+
+For #2, ... LEFT OFF HERE ...
 
 
 - build tooling (skip) (was my solution genius? or cheating?)
