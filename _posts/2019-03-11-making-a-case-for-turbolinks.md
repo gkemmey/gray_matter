@@ -4,7 +4,7 @@ title: "Making a (Long-Winded) Case for Turbolinks"
 published: true
 ---
 
-[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try and convince you of that as we build a simple application together. How you ask? In three steps: First, we'll build our app like we might have in days long gone (like circa 2008). Second, we'll React-ify it, and lambast the complexity that adds. And lastly, we'll look at just how little we have to change in our first version to realize the bulk of the benefits we got by adding React in the first place!
+[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try to convince you of that as we build a simple application together. How you ask? In three steps: First, we'll build our app like we might have in days long gone (like circa 2008). Second, we'll React-ify it, and lambast the complexity that adds. And lastly, we'll look at just how little we have to change in our first version to realize the bulk of the benefits we got by adding React in the first place!
 
 So let's party like it's 2008! 🎊
 
@@ -891,7 +891,7 @@ Ok, there is admittedly an elegance to `className={editing && "editing"}` and `o
 
 You know what didn't get better? That title input. An `onChange` handler to update our state with the value of the input? That's gross. And we need a state-plus-update-handler solution like that for every. single. input. any of our forms collect.
 
-Also, look at that `onBlur`. We're now responsible for syncing state after we get a response from our server. Before, we could submit the form and forget, so to speak. The server was gonna tell us where to go next. Now, we're responsible for making sure the view resets post-update, both by calling `refresh()` to reset our parent's state and by calling `setEditing(false)` to rest our own. I don't love that.
+Also, look at that `onBlur`. We're now responsible for syncing state after we get a response from our server. Before, we could submit the form and forget, so to speak. The server was gonna tell us where to go next. Now, we're responsible for making sure the view resets post-update, both by calling `refresh()` to reset our parent's state and by calling `setEditing(false)` to reset our own. I don't love that.
 
 ### Routing
 
@@ -901,7 +901,7 @@ So is all that React stuff better than what we had before? Well, it's definitely
 
 ## Turbolinks
 
-Full fucking circle baby! ⚫ So what is Turbolinks? It's a frontend library that makes navigating our web application faster -- specifically that 2008 version we wrote above -- with minimal changes to that server-rendered-HTML style. If our old skool version is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser. And if our React version largely does away with those patterns to build atop more custom client-side constructs. Turbolinks sits somewhere in the middle.
+Full fucking circle baby! ⚫ So what is Turbolinks? It's a frontend library that makes navigating our web application faster -- specifically that 2008 version we wrote above -- with minimal changes to that server-rendered-HTML style. If our old skool version is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser, and if our React version largely does away with those patterns to build atop more custom client-side constructs -- Turbolinks sits somewhere in the middle.
 
 If we just include it in our [head and start it](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-turbolinks-and-stimulus/app/assets/javascript/packs/application.js#L12-L13), Turbolinks will turn all of our link following into remote requests for the new HTML at that location, swap the `<body>` with the new result, and merge new `script` tags into the `<head>` -- all without reloading the page. If all we wanted to do was submit GET requests for HTML pages, Turbolinks would turn our application into single page app for just a single line of client-side code, and without adjusting our server at all.
 
@@ -1023,7 +1023,7 @@ Also, the way Turbolinks replaces our whole `<body>` allow us to just focus on o
 
 ## Conclusion
 
-As the industry progresses, I think there's a tendency to throw the baby out with the bathwater as we learn to build things in new ways. React (and other SPA frameworks) are the current embodiment of that tendency. Definitely there are times where React adds value, is even necessary, but not for most apps. Most of the time, it's not worth the complexity it adds. Which begs the question, why is it so prolific?
+As the industry progresses, I think there's a tendency to throw the baby out with the bathwater as we learn to build things in new ways. React (and other SPA frameworks) are the current embodiment of that tendency. Definitely there are times where React adds value, is even necessary, but not for most apps. Most of the time, it's not worth the complexity it adds. Which begs the question, why is it so ubiquitous?
 
 It's hard to say for sure. But I think part of it is once we learn a tool or a way of building things, it's natural to use that thing for every thing. Also, I think the industry is dominated by people without a lot of historical context. I work with a fair amount of developers who don't know what building websites was like in 2008 -- some who weren't building websites pre-React -- and that makes it hard to compare approaches. And I doubt that's a unique story.
 
