@@ -4,7 +4,9 @@ title: "Making a (Long-Winded) Case for Turbolinks"
 published: true
 ---
 
-[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try and convince you of that as we build a simple application together. But first we need a baseline, so let's party like it's 2008-ish! 🎊
+[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try and convince you of that as we build a simple application together. How you ask? In three steps: First, we'll build our app like we might have in days long gone (like circa 2008). Second, we'll React-ify it, and lambast the complexity that adds. And lastly, we'll look at just how little we have to change in our first version to realize the bulk of the benefits we got by adding React in the first place!
+
+So let's party like it's 2008! 🎊
 
 Not even joking a little bit here, this was the nirvana of web development. Browsers (not developers) sent data to servers, and servers sent back HTML. Full, round-trips every time. Developers _actually_ rendered `<form>` tags! Sure, sometimes we sent a little sprinkle of JavaScript, but for any real work, we fully expected the users would send requests back to our server. Apps were largely stateless. And life was simple 🏕
 
@@ -419,6 +421,8 @@ So then the next thing we do is define a function that we want to run whenever a
 Let's see the HTML:
 
 ```html
+<!-- app/views/index.ejs -->
+
 <li class="<%= todo.completed ? "completed" : "" %>">
   <div class="view">
 
