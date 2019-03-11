@@ -241,7 +241,7 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 ```
 
-And now we can read the contents of the from off `req.body` in our route:
+And now we can read the contents of the form off `req.body` in our route:
 
 ```js
 // app/controlelrs/index.js
@@ -667,14 +667,6 @@ Now, hold on to this version of our app, we're gonna come back to it. But first 
 
 I'll probably skip over quite a bit. This isn't a React tutorial at all. That first section was a little tutorial-y, but since we so rarely write apps that way anymore, I wanted to draw special attention to that setup. Here I just want to look at some of the complexity we add as we move logic to the frontend.
 
-### Build Tooling
-
-I don't want to beat on a long since dead horse, but Jesus, why is this so difficult? I could have used `create-react-app`, but it runs its own Express server, so then I'm stuck telling it to proxy requests back to the one we just built and running `yarn start` twice. That's fucking gross.
-
-[Here's](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/Rakefile) what I did instead. I think it's cool. I might be the only one.
-
-Anyway, enough on that. `next()` 👈 Still funny 😂
-
 ### No More HTML
 
 We don't write that anymore. Here's what our server will render instead:
@@ -695,7 +687,7 @@ We don't write that anymore. Here's what our server will render instead:
 </html>
 ```
 
-Cool. Here's the JavaScript we'll send to fill that `#root` element client-side:
+And here's the JavaScript we'll use to fill that `#root` element client-side:
 
 ```js
 // app/assets/javascript/todos/index.js
@@ -715,6 +707,8 @@ document.addEventListener('DOMContentLoaded', () => {
   )
 })
 ```
+
+Cool. I guess servers were bad at generating and sending actually useful HTML? Out of the gate, we've now taken on the burden of determining what to do while the user waits for our JavaScript resources to load, and how to stop services that crawl the web (like Google's indexers) perceiving our web page as empty. Yes, there's ways to fix both of these, and it's not even necessary to for every app, but it's still on us to make that decision.
 
 ### We've Now Gotta Sync Todos
 
@@ -811,7 +805,7 @@ And that's the React version of simple.
 
 Let's look a little closer at our [`Todos`](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L113-L133) and [`Todo`](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L65-L111) components.
 
-Our `Todos` component takes all our todos, renders the form for toggling all our todos, and iterates over each one rendering an individual `Todo` component:
+Our `Todos` component takes all our todos, renders the form for marking all our todos complete, and iterates over each one rendering an individual `Todo` component:
 
 ```js
 const Todos = ({ todos, refresh }) => {
@@ -829,7 +823,9 @@ const Todos = ({ todos, refresh }) => {
 }
 ```
 
-Not too horrid. Actually, a lot like what we had to do in our template before. And for the `Todo` component, let's take it in pieces. First the setup:
+Not too horrid. Actually, a lot like what we had to do in our template before. Just without HTML, and with this other maybe-right-if-we-kept-our-two-client-and-server-versions-in-sync collection of todos... 😬
+
+And for the `Todo` component, let's take it in pieces. First the setup:
 
 ```js
 const Todo = ({ id, title, completed, refresh }) => {
@@ -848,7 +844,7 @@ const Todo = ({ id, title, completed, refresh }) => {
 }
 ```
 
-Each `Todo` tracks two items of state 1) whether it's being edited and 2) what the new title is. I hate the `newTitle` bit, again we gotta take over something the browser _used to do for us_ -- managing the value currently in an input. This pattern is just something we have to do in React. And it's definitely not simpler than what we had before. In fact, React is patently bad at handling forms.
+Each `Todo` tracks two items of state 1) whether it's being edited and 2) what the new title is. I hate the `newTitle` bit. Again, we gotta take over something the browser _used to do for us_ -- managing the value currently in an input. This pattern is just something we have to do in React. And it's definitely not simpler than what we had before. In fact, React is patently bad at handling forms.
 
 But in fairness, juggling our "currently being edited" state got better. Let's add the JSX:
 
@@ -898,6 +894,14 @@ Also, look at that `onBlur`. We're now responsible for syncing state after we ge
 Or really, more components and more state, it's just stored in the address bar now. Again, I'm largely gonna skip over this, but I just wanna call out this is yet another thing the browser used to handle for us. We're now responsible for keeping the address bar in sync with the state of our app. How? Well first we give that state to our `App` with the `<Route>` component. And then we use these special `Link` components [here](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L153-L167) to tell the address bar and our app "Hey, update _as if_ someone had followed this link".
 
 So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to do full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
+
+### Build Tooling
+
+I don't want to beat on a long since dead horse, but Jesus, why is this so difficult? I could have used `create-react-app`, but it runs its own Express server, so then I'm stuck telling it to proxy requests back to the one we just built and running `yarn start` twice. That's fucking gross.
+
+[Here's](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/Rakefile) what I did instead. I think it's cool. I might be the only one.
+
+Anyway, enough on that.
 
 ## Turbolinks
 
@@ -1019,7 +1023,11 @@ So is all that Turbolinks stuff better than our 2008 version? Well, it's _also_ 
 
 Perhaps more importantly than the amount of code it took, is how neatly this fits into our paradigm of writing web apps from 2008. It's nearly seamless! And for that, we've eliminated a large swath of problems we would have to take on using React. There's no exchanging data. No syncing two versions of truth. No asynchronous SPA framework to deal with. No countless other React-related problems and complexities we take on once we commit to that ecosystem.
 
-Also, the way Turbolinks replaces our whole `<body>` allow us to just focus on our initial rendering. Right, it's still _just_ the `index.ejs` file. We never have to worry about updating individual sections, which we saw a little bit of when we had to undo the state of our todo that was toggled for editing. We just always throw away what we have and re-render everything -- the whole `index.ejs` file.
+Also, the way Turbolinks replaces our whole `<body>` allows us to just focus on our initial rendering. Right, it's still _just_ the `index.ejs` file. We never have to worry about updating individual sections, which we saw a little bit of when we had to undo the state of our todo that was toggled for editing. We just always throw away what we have and re-render everything -- the whole `index.ejs` file.
+
+Are there downsides to Turbolinks? Certainly. We do have to be a [little more structured](https://github.com/turbolinks/turbolinks#making-transformations-idempotent) when we write frontend JavaScript that transforms our HTML. And replacing the entire `<body>` won't always be the most performant way to have done something. There will be times React would be faster. But that's fair. Like we said before, simplicity almost always comes at the cost of some speed.
+
+At the end of the day, Turbolinks is a great way to get (most of) the performance from a single page app with (most of) the simplicity of a server-rendered one 🌆
 
 ## Conclusion
 
