@@ -29,7 +29,7 @@ Ok, so some requirements:
 
 So that's not nothing. Let's build it! Using [Express](https://expressjs.com/)...like it's 2008...even though Node didn't come along until 2009...and, uh, Express...well, not until 2010...ok, we'll build it like it's 2008-ish! 😬
 
-## Old Skool Verison
+## Old Skool Version
 
 ### Database
 
