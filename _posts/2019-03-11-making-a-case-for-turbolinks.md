@@ -212,7 +212,7 @@ We'll tackle these together since neither is abundantly useful on their own.
 
 #### Creating
 
-First, we need a away to get todos from our users. In 2008, we used `<form>` tags. So let's add one to our `<header>` skeleton:
+First, we need a way to get todos from our users. In 2008, we used `<form>` tags. So let's add one to our `<header>` skeleton:
 
 ```html
 <!-- app/views/index.ejs -->
@@ -414,7 +414,7 @@ on(document, "click", "[data-behavior~=submit_form_when_clicked]", function(even
 
 First, we define a function called `on`. We're gonna skip over the [details](https://learn.jquery.com/events/event-delegation/) of what that does, but it lets us define event listeners on the document that run when the event propagates to an element that matches our selector.
 
-So then the next thing we do is define a function that we want to run whenever a `click` event is propagated to an element that matches the `[data-behavior~=submit_form_when_clicked]` selector. And that function finds the closes `<form>` tag to that matching element and submits it.
+So then the next thing we do is define a function that we want to run whenever a `click` event is propagated to an element that matches the `[data-behavior~=submit_form_when_clicked]` selector. And that function finds the closest `<form>` tag to that matching element and submits it.
 
 Let's see the HTML:
 
@@ -844,7 +844,7 @@ const Todo = ({ id, title, completed, refresh }) => {
 }
 ```
 
-Each `Todo` tracks two items of state 1) whether it's being edited and 2) what the new title is. I hate the `newTitle` bit, again we gotta take over something the browser _used to do for us_ -- managing the value currently in an input. This pattern is just something we have to do in React And it's definitely not simpler than what we had before. In fact, React is patently bad at handling forms.
+Each `Todo` tracks two items of state 1) whether it's being edited and 2) what the new title is. I hate the `newTitle` bit, again we gotta take over something the browser _used to do for us_ -- managing the value currently in an input. This pattern is just something we have to do in React. And it's definitely not simpler than what we had before. In fact, React is patently bad at handling forms.
 
 But in fairness, juggling our "currently being edited" state got better. Let's add the JSX:
 
@@ -887,17 +887,17 @@ Ok, there is admittedly an elegance to `className={editing && "editing"}` and `o
 
 You know what didn't get better? That title input. An `onChange` handler to update our state with the value of the input? That's gross. And we need a state-plus-update-handler solution like that for every. single. input. any of our forms collect.
 
-Also, look at that `onBlur`. We're now responsible for syncing state after we get a response form our server. Before, we could submit the form and forget, so to speak. The server was gonna tell us where to go next. Now, we're responsible for making sure the view resets post-update, both by calling `refresh()` to reset our parent's state and by calling `setEditing(false)` to rest our own. I don't love that.
+Also, look at that `onBlur`. We're now responsible for syncing state after we get a response from our server. Before, we could submit the form and forget, so to speak. The server was gonna tell us where to go next. Now, we're responsible for making sure the view resets post-update, both by calling `refresh()` to reset our parent's state and by calling `setEditing(false)` to rest our own. I don't love that.
 
 ### Routing
 
-Or really, more components and more state, it's just stored in the address bar now. Again, I'm largely gonna skip over this, but I just wanna call out this is yet another thing the browser used to handle for us. We're now responsible for keeping address bar in sync with the state of our app. How? Well first we give that state to our `App` with the `<Route>` component. And then we use these special `Link` components [here](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L153-L167) to tell the address bar and our app "Hey, update _as if_ someone had followed this link".
+Or really, more components and more state, it's just stored in the address bar now. Again, I'm largely gonna skip over this, but I just wanna call out this is yet another thing the browser used to handle for us. We're now responsible for keeping the address bar in sync with the state of our app. How? Well first we give that state to our `App` with the `<Route>` component. And then we use these special `Link` components [here](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L153-L167) to tell the address bar and our app "Hey, update _as if_ someone had followed this link".
 
-So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
+So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to do full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
 
 ## Turbolinks
 
-Full fucking circle baby! ⚫ So what is it? It's a frontend library that makes navigating our web application faster -- specifically that 2008 version we wrote above -- with minimal changes to that server-rendered-HTML style. If our old skool version is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser. And if our React version largely does away with those patterns to build atop more custom client-side constructs. Turbolinks sits somewhere in the middle.
+Full fucking circle baby! ⚫ So what is Turbolinks? It's a frontend library that makes navigating our web application faster -- specifically that 2008 version we wrote above -- with minimal changes to that server-rendered-HTML style. If our old skool version is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser. And if our React version largely does away with those patterns to build atop more custom client-side constructs. Turbolinks sits somewhere in the middle.
 
 If we just include it in our [head and start it](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-turbolinks-and-stimulus/app/assets/javascript/packs/application.js#L12-L13), Turbolinks will turn all of our link following into remote requests for the new HTML at that location, swap the `<body>` with the new result, and merge new `script` tags into the `<head>` -- all without reloading the page. If all we wanted to do was submit GET requests for HTML pages, Turbolinks would turn our application into single page app for just a single line of client-side code, and without adjusting our server at all.
 
@@ -1005,7 +1005,7 @@ router.post('/', function(req, res) {
 })
 ```
 
-And that solves #2. Now our from can be submitted remotely, and when it is, we'll respond with two lines of JavaScript that tells Turbolinks what to do.
+And that solves #2. Now our `<form>` can be submitted remotely, and when it is, we'll respond with two lines of JavaScript that tells Turbolinks what to do.
 
 So, yes, this would be fucking gross to have to write every time. But both paths through that `if / else` do the same thing -- they `redirect`. It's just that if we know it was a remote submission / Turbolinks setup that brought us here, we need to "redirect" a little differently.
 
@@ -1013,9 +1013,9 @@ So what if instead of writing all that every time, we made `res.redirect` just d
 
 So is all that Turbolinks stuff better than our 2008 version? Well, it's _also_ definitely not simpler. But it does avoid round-trips to the server, so it's faster. Nearly always, speed and complexity will oppose one another. But here, we've harnessed nearly all the performance benefit of being a single page app for the price of submitting forms remotely, and about ~60 lines of server-side code to monkeypatch Express's `res.redirect` function 🐵
 
-Perhaps more importantly than the amount of code it took, is how neatly this fits into our paradigm of writing web apps from 2008. It's nearly seamless! And for that, we've eliminated a large swatch of problems we would have to take on using React. There's no exchanging data. No syncing two versions of truth. No asynchronous SPA framework to deal with. No countless other React-related problems and complexities we take on once we commit to that ecosystem.
+Perhaps more importantly than the amount of code it took, is how neatly this fits into our paradigm of writing web apps from 2008. It's nearly seamless! And for that, we've eliminated a large swath of problems we would have to take on using React. There's no exchanging data. No syncing two versions of truth. No asynchronous SPA framework to deal with. No countless other React-related problems and complexities we take on once we commit to that ecosystem.
 
-Also, the way Turbolinks replaces our whole `<body>` allow us to just focus on our initial rendering. Right, it's still _just_ the `index.ejs` file. We never have to worry updating individual sections, which we saw a little bit of when we had to undo the state of our todo that was toggled for editing. We just always throw away what we have and re-render everything -- the whole `index.ejs` file.
+Also, the way Turbolinks replaces our whole `<body>` allow us to just focus on our initial rendering. Right, it's still _just_ the `index.ejs` file. We never have to worry about updating individual sections, which we saw a little bit of when we had to undo the state of our todo that was toggled for editing. We just always throw away what we have and re-render everything -- the whole `index.ejs` file.
 
 ## Conclusion
 
