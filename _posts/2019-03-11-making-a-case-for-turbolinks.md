@@ -4,7 +4,7 @@ title: "Making a (Long-Winded) Case for Turbolinks"
 published: true
 ---
 
-[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try to convince you of that as we build a simple application together. How you ask? In three steps: First, we'll build our app like we might have in days long gone (like circa 2008). Second, we'll React-ify it, and lambast the complexity that adds. And lastly, we'll look at just how little we have to change in our first version to realize the bulk of the benefits we got by adding React in the first place!
+[Turbolinks](https://github.com/turbolinks/turbolinks) is the coolest technology not nearly enough websites are using. And I'm gonna try to convince you of that as we build a simple application together. How you ask? In three steps: First, we'll build our app like we might have in days long gone (like circa 2008). Second, we'll React-ify it, and consider the complexity that adds. And lastly, we'll look at just how little we have to change in our first version to realize the bulk of the benefits we got by adding React in the first place!
 
 So let's party like it's 2008! 🎊
 
