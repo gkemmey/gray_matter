@@ -12,7 +12,7 @@ description:      'TODO - add a description'
 
 author:
   name:           'Gray Kemmey'
-  url:            http://graykemmey.me
+  url:            http://www.graykemmey.com
 
 plugins:          ['jekyll-paginate', 'jekyll-gist']
 paginate:         5
