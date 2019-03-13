@@ -230,7 +230,7 @@ First, we need a way to get todos from our users. In 2008, we used `<form>` tags
 </header>
 ```
 
-And that's all the browsers-side stuff we need to create todo -- a little HTML. We do have to tell Express about our plan though:
+And that's all the browsers-side stuff we need to create a todo -- a little HTML. We do have to tell Express about our plan though:
 
 ```js
 // app.js
@@ -244,7 +244,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 And now we can read the contents of the form off `req.body` in our route:
 
 ```js
-// app/controlelrs/index.js
+// app/controllers/index.js
 
 router.post('/', function(req, res) {
   models.Todo.
@@ -893,8 +893,6 @@ Also, look at that `onBlur`. We're now responsible for syncing state after we ge
 
 Or really, more components and more state, it's just stored in the address bar now. Again, I'm largely gonna skip over this, but I just wanna call out this is yet another thing the browser used to handle for us. We're now responsible for keeping the address bar in sync with the state of our app. How? Well first we give that state to our `App` with the `<Route>` component. And then we use these special `Link` components [here](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-react-using-webpacker/app/assets/javascript/todos/App.js#L153-L167) to tell the address bar and our app "Hey, update _as if_ someone had followed this link".
 
-So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to do full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
-
 ### Build Tooling
 
 I don't want to beat on a long since dead horse, but Jesus, why is this so difficult? I could have used `create-react-app`, but it runs its own Express server, so then I'm stuck telling it to proxy requests back to the one we just built and running `yarn start` twice. That's fucking gross.
@@ -903,11 +901,13 @@ I don't want to beat on a long since dead horse, but Jesus, why is this so diffi
 
 Anyway, enough on that.
 
+So is all that React stuff better than what we had before? Well, it's definitely not simpler. But it does prevent us from having to do full round-trips to the server, and that will always be quicker. But it's not the only way to accomplish such a thing...
+
 ## Turbolinks
 
 Full fucking circle baby! ⚫ So what is Turbolinks? It's a frontend library that makes navigating our web application faster -- specifically that 2008 version we wrote above -- with minimal changes to that server-rendered-HTML style. If our old skool version is a barebones approach built on the native constructs given to us by HTML, HTTP, and the browser, and if our React version largely does away with those patterns to build atop more custom client-side constructs -- Turbolinks sits somewhere in the middle.
 
-If we just include it in our [head and start it](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-turbolinks-and-stimulus/app/assets/javascript/packs/application.js#L12-L13), Turbolinks will turn all of our link following into remote requests for the new HTML at that location, swap the `<body>` with the new result, and merge new `script` tags into the `<head>` -- all without reloading the page. If all we wanted to do was submit GET requests for HTML pages, Turbolinks would turn our application into single page app for just a single line of client-side code, and without adjusting our server at all.
+If we just include it in our [`head` and start it](https://github.com/gkemmey/todomvc_express_and_ejs/blob/with-turbolinks-and-stimulus/app/assets/javascript/packs/application.js#L12-L13), Turbolinks will turn all of our link following into remote requests for the new HTML at that location, swap the `<body>` with the new result, and merge new `<script>` tags into the `<head>` -- all without reloading the page. If all we wanted to do was submit GET requests for HTML pages, Turbolinks would turn our application into single page app for just a single line of client-side code, and without adjusting our server at all.
 
 That's amazing! 😲 But...it's not all our app needs to do -- there's two things Turbolinks can't do for us without us getting involved:
 
@@ -987,7 +987,7 @@ on(document, "submit", "form[data-remote~=true]", function(event) {
 
 We can use this handler to submit any `<form>` tag that's decorated with `data-remote="true"`. Essentially, it submits the form as the browser would have itself, just with `fetch`. Then, when it gets a response back -- and remember that response should be a small snippet of JavaScript -- it adds a `<script>` tag to the `<head>` to force the browser to evaluate that response.
 
->Honestly, I wouldn't even do this yourself. Check out the [rails-ujs](https://github.com/rails/rails/tree/master/actionview/app/assets/javascripts) library. It's from rails, but isn't actually tied to it. It gives you the `data-remote` stuff, plus more.
+>Honestly, I wouldn't even do this yourself. Check out the [rails-ujs](https://github.com/rails/rails/tree/master/actionview/app/assets/javascripts) library. It's from Rails, but isn't actually tied to it. It gives you the `data-remote` stuff, plus more.
 
 Ok, and server side:
 
