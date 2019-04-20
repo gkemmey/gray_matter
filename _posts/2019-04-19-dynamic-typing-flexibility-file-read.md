@@ -24,7 +24,7 @@ File.read(ATadContrivedSure.new)
 # => "hello"
 ```
 
-And if you give it something that can't be coerced into a string (defines a `to_str` method), it'll blow chunks at runtime:
+And if you give it something that can't be coerced into a string (doesn't define a `to_str` method), it'll blow chunks at runtime:
 
 ```rb
 File.read(true)
