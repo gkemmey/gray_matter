@@ -88,6 +88,11 @@ end
 
 And maybe we'll all write typed code that's equally as flexible as what we have today. But I'm skeptical. I worry types will enforce a certain rigidity in your design. After all, Java also has a top level `Object` class everything else inherits from, look what they came up with.
 
+Static typing is powerful, and I'm not saying you're wrong to love and prefer it, but dynamic typing also has its place. Ruby has always been one of those places -- a language and community built around the advantages of dynamic typing. I'd hate to lose that.
+
+So don't change Ruby. [^2]
+
 ---
 
 [^1]: Yes, this isn't the post-Java-7 way of doing things anymore, but it was when I was writing Java.
+[^2]: For context: there's been a lot of [excitement around Ruby 3 having types](https://news.ycombinator.com/item?id=19697405). I'm less excited.
