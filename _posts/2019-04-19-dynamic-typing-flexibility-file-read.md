@@ -59,7 +59,7 @@ File.typed_read(Pathname.new(Nonsensical.new.to_s))
 You know what this reminds me of? Java [^1].
 
 ```java
-BufferedReader reader = new BufferedReader(new FileReader("./hello.txt"));
+BufferedReader reader = new BufferedReader(new FileReader("hello.txt"));
 // 👆specifically this line 🤢
 
 String         line = null;
@@ -68,7 +68,7 @@ StringBuilder  stringBuilder = new StringBuilder();
 try {
   while ((line = reader.readLine()) != null) {
     stringBuilder.append(line);
-    stringBuilder.append(System.getProperty("line.separator"););
+    stringBuilder.append(System.getProperty("line.separator"));
   }
 
   return stringBuilder.toString();
