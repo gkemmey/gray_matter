@@ -53,7 +53,7 @@ end
 
 # we're basically responsible for casting to Pathname
 File.typed_read(Pathname.new("hello.txt"))
-File.typed_read(Pathname.new(Nonsensical.new.to_s))
+File.typed_read(Pathname.new(ATadContrivedSure.new.to_s))
 ```
 
 You know what this reminds me of? Java [^1].
