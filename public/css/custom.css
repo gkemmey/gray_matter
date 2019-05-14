@@ -16,6 +16,17 @@
   }
 }
 
+/*
+| font-size | em |  px  |
+| --------- | -- | ---- |
+| 16px      | 48 |  768 |
+| 16px      | 58 |  928 |
+| 16px      | 64 | 1024 |
+| 20px      | 48 |  960 |
+| 20px      | 58 | 1160 |
+| 20px      | 64 | 1280 |
+*/
+
 /* sidebar (will conflict if you flip to a themed option) */
 .sidebar {
   background-color: #282a36; /* matches dracula background */
