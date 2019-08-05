@@ -188,11 +188,11 @@ The rest of those query methods are used in the controllers, which we'll get to,
 
 ### The `Nutmeg::Stripe::CardHandler` object
 
-All the handlers follow a similar pattern: an initializer that holds some data they'll need to do their job, one or more public instance methods that do the work, and a slew of private methods that help them do that work.
+All the handlers follow a similar pattern: an initializer that holds some data they'll need to do their job, one or more public instance methods that do the work of communicating with Stripe's API and updating our `User` record, and a slew of private methods that help them do that work.
 
 Those public instance method _always_ return an instance of `Nutmeg::Stripe::Response`.
 
-In the case of the `CardHandler` object, it's an `#add` and a `#remove` methods.
+In the case of our `CardHandler` object, there's a public `#add` method and a public `#remove` method:
 
 ```rb
 module Nutmeg
@@ -243,11 +243,11 @@ end
 
 >Remember I said `Response` was setup to handle including additional details about successes, too? Well, I opted not to do that and instead keep success notifications to the user more high-level, which we'll see in the controller. But that's why we return `Nutmeg::Stripe::Response.new` without any arguments -- it's just a response without an error.
 
-Ok, I submit you can read the `#add` method, and even if you don't know how to code, you can tell me what it does 😍
+Ok, I submit you could read the `#add` method, and without knowing how to code, you could tell me what it does 😍
 
-If you look we declare accessors for `customer` and `card`. Those are so `create_stripe_customer_and_card` can do it's work and then set that newly created `Stripe::Customer`, so it can be used elsewhere. In this case, we use it in the `#user_params` method to pull info off like `customer.email` and `card.last4`. That implementation isn't show, but it knows how to take those Stripe records, and persist the information we're also interested in saving in our database to the user.
+If you look, we declare accessors for `customer` and `card`. Those are so private helper methods like `create_stripe_customer_and_card` can do their work, and then set our newly created `Stripe::Customer` and `Stripe::Card` objects so they can be used elsewhere. In this case, we use them both in the `#user_params` method to access information like `customer.email` and `card.last4`. That implementation isn't shown, but it knows how to take those Stripe records, and persist the information we're also interested in saving in our database to the user.
 
-Also, we don't have to do any error handling in our handler classes, because we always wrap their usage in that `with_stripe_error_handling` method.
+Also, notice we don't have to do any error handling in our handler classes, because we always wrap their usage in that `with_stripe_error_handling` method.
 
 With that, let's go look at the controller that leverages this handler.
 
@@ -315,13 +315,13 @@ class Settings::BillingsController < ApplicationController
 end
 ```
 
-Finally, you can see in `#create` we use our top-level of action helper, `Nutmeg::Stripe#add_card`. We know we get a `Nutmeg::Stripe::Response` object back no matter what happens in `#add_card`. The rest of the controller action, just interrogates that response object to figure out 1) where to go next and 2) what message to show the user.
+Finally, you can see in `#create` we use our top-level of action helper -- `Nutmeg::Stripe#add_card`. Remember, we'll get a `Nutmeg::Stripe::Response` object back no matter what happens in `#add_card`. The rest of the controller action, just interrogates that response object to figure out 1) where to go next and 2) what message to show the user.
 
 I think that's an incredibly pleasing setup that communicates what the controller does, without overloading you on details. As you need those details, you can dig deeper.
 
 `Nutmeg::Stripe#flash_for` is a method we haven't looked at, but it just gets a flash message from an indentifier.
 
-A bit of weirdness is the `#validate_email` method. We let the user provide an email with their credit card info, which we'll send billing related notices to. We want to validate that email, but we don't exactly have a normal model-flow to utilize. I opted instead to check it at the time they post the form, and if it doesn't look valid we 1) set a flash message we can use to show the issue in the form and 2) redirect back to the form. A fair compromise I think 🤷‍♂️
+A bit of weirdness is the `#validate_email` method. We let the user provide an email with their credit card info, which we'll send billing related notices to. We want to validate that email, but we don't exactly have a normal model-flow to utilize. I opted instead to check it at the time they post the form, and if it doesn't look valid we 1) set a flash message we can use to show the issue in the form and 2) redirect back to the form. A fair compromise, I think 🤷‍♂️
 
 Let's go look at the form.
 
@@ -329,7 +329,7 @@ Let's go look at the form.
 
 Luckily, this is the only Stripe-enabled form. Starting with a subscription when you don't have a credit card yet uses this exact same form, it just submits to a different place.
 
-The whole form, can be seen [here](https://github.com/gkemmey/nutmeg/blob/master/app/views/settings/billings/new.html.erb), so instead of copying the whole thing, let's look at some pieces.
+The form is a little lengthy, so instead of copying the whole thing we'll just look at some pieces of it, but the whole form can be seen [here](https://github.com/gkemmey/nutmeg/blob/master/app/views/settings/billings/new.html.erb).
 
 First up, here's how we generate the actual `<form>` tag:
 
@@ -345,7 +345,7 @@ First up, here's how we generate the actual `<form>` tag:
 
 We turn the default Rails ajax submitting functionality off, so we can handle the submitting manually. And to do that we attach a [stimulus](https://github.com/stimulusjs/stimulus) controller to the form, with an action that'll run when the form is submitted.
 
->Explaining stimulus is beyond the scope of this, but essentially, it is a framework for organizing your JavaScript and attaching functionality through data attributes. It's nothing you couldn't do yourself with `$(document).on`, but removes a lot of the boilerplate and enforces some conventions. Plus, it works fantastically with [turbolinks](https://github.com/turbolinks/turbolinks).
+>Explaining stimulus is beyond the scope of this post, but essentially, it is a framework for organizing your JavaScript and attaching functionality through data attributes. It's nothing you couldn't do yourself with `$(document).on`, but removes a lot of the boilerplate and enforces some conventions. Plus, it works fantastically with [turbolinks](https://github.com/turbolinks/turbolinks).
 
 All you gotta know is when this form is submitted, the `handleSubmit` function on the stimulus controller will be run.
 
@@ -371,15 +371,15 @@ Then we have the three stripe fields: `number`, `expiry`, and `csv`. All of them
 </div>
 ```
 
-The important part is it's just `<div>` rather than an actual form element. We assign a `target` to it, and that's a stimulus thing so we can get access to this `<div>` in the stimulus controller. Everything else is just markup that makes things look nice with [bulma](https://bulma.io/).
+The important part is it's a `<div>` rather than an actual form element. Additionally, we assign a `target` to it, which is a stimulus convention that allows us to access this `<div>` in the stimulus controller. Everything else is just markup that makes things look nice with [bulma](https://bulma.io/).
 
-When our stimulus controller takes over (essentially on `$(document).ready`), we'll connect Stripe Elements to this `<div>`. Then stripe will render it's `iframe` that has our input into that `<div>`. 👈 That's the magic that keeps credit card info off our servers _while_ feeling like just another form on our website.
+When our stimulus controller takes over (essentially on `$(document).ready`), we'll connect Stripe Elements to this `<div>`. Then stripe will render its `iframe` that has our input into that `<div>`. That's the magic 🔮 that keeps credit card info off our servers _while_ feeling like just another form on our website.
 
 Let's look at that stimulus controller.
 
 ### The `CreditCardFormController` (stimulus)
 
-Again, we'll just look at some pieces, but the hole thing can be found [here](https://github.com/gkemmey/nutmeg/blob/master/app/javascript/controllers/credit_card_form_controller.js.erb).
+Again, we'll just look at some pieces, but the whole thing can be found [here](https://github.com/gkemmey/nutmeg/blob/master/app/javascript/controllers/credit_card_form_controller.js.erb).
 
 The `#connect` function is essentially our `$(document).ready` hook -- this is where we can setup our form after the DOM has loaded.
 
@@ -397,7 +397,7 @@ connect() {
 }
 ```
 
-Ours is pretty simple, 1) make sure any errors we were displaying are gone (reset the form) 2) make sure we connect each of those input `<divs>` to Stripe using Elements.
+Ours is pretty simple, 1) make sure any errors we were displaying are gone and 2) make sure we connect each of those input `<divs>` to Stripe using Elements.
 
 ```js
 connectToStripe(target) {
@@ -425,9 +425,9 @@ connectToStripe(target) {
 
 The first half of this function just maps our target names to identifiers Stripe expects. Once we have that, we can create a new Stripe Element. We then tell that new element to mount to our input `<div>` markup. Stimulus lets us access those with something like `this.numberTarget` -- this just does that dynamically for the `target` variable. Then we wire up a change handler.
 
-`handleChange` returns a function closed over `target` that adds the error from Stripe, like "invalid credit card number", to the DOM if there is one, and removes any previously added errors if there aren't any.
+`handleChange` returns a function closed over `target` that adds any errors from Stripe -- like "invalid credit card number" -- to the DOM, and removes any previously added errors if there aren't any.
 
-The last part of the controller is `handleSubmit`, which as we said runs when the form is submitted.
+The last part of the controller is `handleSubmit`, which, as we said, runs when the form is submitted.
 
 ```js
 handleSubmit(event) {
@@ -458,11 +458,15 @@ handleSubmit(event) {
 }
 ```
 
-When we submit the form, this handler takes that `tokenizableStripeElement` we got from Stripe Elements and asks Stripe to create a token from it. If that process works, we add it as a hidden input to our form and submit it. At this point, our form only has the email and that token inputs when it submits to your server. Magic! 🔮 If Stripe can't make a token, we run the `handleChange` function to display whatever error occurred under our credit card number input.
+When we submit the form, this handler takes that `tokenizableStripeElement` we got from Stripe Elements and asks Stripe to create a token from it. If that process works, we add the token as a hidden input to our form, and submit it. At this point, our form only has the email and that token inputs when it submits to our server. Magic! 🔮
+
+If Stripe can't make a token, we run the `handleChange` function to display whatever error occurred under our credit card number input.
 
 ### The `User` model
 
-We've sort of skipped over it until now, but our `User` model holds on to some duped information from Stripe, just so we have access to it without necesarilly needing to hit Stripe's servers: `billing_email`, `stripe_customer_id`, `card_last_four`, `card_brand`, and `card_expires_at`.
+We've sort of skipped over it until now, but our `User` model holds on to the `stripe_customer_id` so we can associate a `User` in our system with a customer in Stripe's.
+
+Additionally, the `User` holds on to some duped information from Stripe, just so we have access to it without necessarily needing to hit Stripe's servers: `billing_email`, `card_last_four`, `card_brand`, and `card_expires_at`.
 
 Also, it provides memoized access from our `User` model to a `Stripe::Customer` and their `Stripe::Subscription`:
 
@@ -492,17 +496,17 @@ Not shown here, there's a few things related to our app's specific subscription 
 
 ## Intermission 🎭
 
-Ok, that's all the Stripe integration for our direct interactions with the user -- i.e. when they're interacting with our application, and we're talking to Stripe on their behalf. We've still gotta look at Stripe event handling, webhooks, and testing 😳
+Ok, that's all the Stripe integration for our direct interactions with the user -- i.e. when they're interacting with our application, and we're talking to Stripe on their behalf. But we've still gotta look at Stripe event handling, webhooks, and testing 😳
 
 ## Stripe events and webhooks 👨‍🏭
 
-Once you have a user, attached to a credit card, and enrolled in a subscription to your service, Stripe will continue to do work on your behalf. As it does, it'll create Stripe events for things like disputed charges or refunds or updates to your users that happen through Stripe's dashboard. Webhooks are how your application gets notified of those ongoings.
+Once you have a user attached to a credit card, and enrolled in a subscription to your service, Stripe will continue to do work on your behalf -- like every month Stripe will bill them. As it does, it'll create Stripe events for things like disputed charges or refunds or updates to your customers that happen through Stripe's dashboard. Webhooks are how your application gets notified of those ongoings.
 
-Through your account dashboard, you can configure Stripe with a webhook -- and endpoint on your application that Stripe will send event data to.
+Through your account dashboard, you can configure Stripe with a webhook, which is just an endpoint on your application that Stripe will send event data to.
 
 ### The `StripeEventsController` webhook
 
-For this example, we have all the events we're monitoring (you tell Stripe which ones your webhook listens to) sent to a single endpoing (you can configure multiple). Let's look at that controller action:
+For this example, we have all the events we're monitoring (you tell Stripe which ones your webhook listens to) sent to a single endpoint (you can configure multiple). Let's look at that controller action:
 
 ```rb
 class StripeEventsController < ApplicationController
@@ -555,9 +559,9 @@ end
 
 When an event like `charge.refunded` occurs, Stripe will post some JSON data to this controller. The first thing we do is use the `stripe-ruby` `Stripe::Webhook` class to build a `Stripe::Event` object from the contents of the body and validate its signature. You can configure that `webhook_secret` in the Stripe dashboard when you setup the webhook, and this ensures we know it's Stripe talking to us.
 
-If we can't parse that JSON data (unlikely), we send us an email and return a 400. Otherwise, we save a new `StripeEvent` record to our database. We have a unique validation on `StripeEvent#stripe_id`, so as the comment states if we can't save this new record, we assume we've already handled it. If we haven't handled it, `stripe_event.save` returns true and we call one of our private handler methods.
+If we can't parse that JSON data (unlikely), we send us an email and return a 400. Otherwise, we save a new `StripeEvent` record to our database. We have a unique validation on `StripeEvent#stripe_id`, so, as the comment states, if we can't save this new record, we assume we've already handled it. If we haven't handled it, `stripe_event.save` returns true and we call one of our private handler methods.
 
-The controller's private handler method are named after the type of stripe event, so `handler_for` is a method that can resolve a `Stripe::Event` to a private handler method.
+The controller's private handler methods are named after the type of stripe event, so `handler_for` is a method that can resolve a `Stripe::Event` to a private handler method.
 
 All of the handler methods take our newly created `StripeEvent` object and punt to a background job. We don't want to do any more work than we have to here so we can stay as responsive as possible to Stripe.
 
@@ -565,7 +569,9 @@ Ok, before we look at those handlers, let's take a quick look at the `StripeEven
 
 ### The `StripeEvent` model (not to be confused with `Stripe::Event` from `stripe-ruby`)
 
-Firstly, because of our unique validation this table serves as a record of handled events. Secondly, this class provides a slightly nicer API around the `Stripe::Event` object. All `Stripe::Event` records respond to `.data.object`. Depending upon the type of event, the type of object returned from that chain of method calls will be different. For example, if it's a `charge.refunded` event, `.data.object` returns a `Stripe::Charge` object; if it's a `customer.subscription.trial_will_end` event, `.data.object` returns a `Stripe::Subscription` object.
+Firstly, Stripe says it's possible they'll send you the same event more than once, but because of our unique validation this table serves as a record of already handled events when we're determining whether we need to process an event from Stripe.
+
+Secondly, this class provides a slightly nicer API around the `Stripe::Event` object. All `Stripe::Event` records respond to `.data.object`. Depending upon the type of event, the type of object returned from that chain of method calls will be different. For example, if it's a `charge.refunded` event, `.data.object` returns a `Stripe::Charge` object; if it's a `customer.subscription.trial_will_end` event, `.data.object` returns a `Stripe::Subscription` object.
 
 So to make this a little nicer to work with, we first memoize access to the underlying event object:
 
@@ -622,7 +628,7 @@ end
 
 ### The Stripe event jobs
 
-If you look back at the `StripeEventsController`, all of our private handler methods simply punted to a job. All of these jobs, either send an email or update the user or use that `Nutmeg::Stripe.sync` method (which essentially just checks the information Stripe has and updates the user). Let's take a look:
+If you look back at the `StripeEventsController`, all of our private handler methods simply punted to a job. All of these jobs, either send an email, or update the user, or use that `Nutmeg::Stripe.sync` method (which essentially just checks the information Stripe has and updates the user). Let's take a look:
 
 ```rb
 class Nutmeg::Stripe::Webhooks::InvoiceUpcomingJob < ApplicationJob
@@ -674,7 +680,7 @@ All that's missing now are some tests.
 
 ## Testing 👨‍🔬
 
-This might be the hardest part, because Stripe doesn't really afford us much guidance. We know we shouldn't be hitting their servers in our tests, but what should we do instead? We could mock all of our interactions with classes provided by `stripe-ruby`, but that's a lot of mocking. Too much, in my opinion, and that'll make our tests brittle.
+This might be the hardest part, because Stripe doesn't really afford us much guidance. We know we shouldn't be hitting their servers in our tests, but what should we do instead? We could mock all of our interactions with classes provided by `stripe-ruby`, but that's a lot of mocking. Too much in my opinion, and that'll make our tests brittle.
 
 Instead, I opted to use [stripe-ruby-mock](https://github.com/rebelidealist/stripe-ruby-mock). It does a few different things, but at its core it's a reverse-engineered implementation of the Stripe API. Anytime we use one of the `stripe-ruby` classes, instead of hitting Stripe's servers, they will instead hit this mock API.
 
@@ -682,7 +688,7 @@ Is this still brittle? Yeah, a little bit. Our tests are certainly dependent on 
 
 ### The `TestHelpers::StripeMocking` mixin
 
-This is our integration point with `stripe-ruby-mock`. Any test that needs Stripe mocked can include this mixin. Let's take a look:
+This is our integration point with `stripe-ruby-mock`. Any test that need the mock Stripe API can include this mixin. Let's take a look:
 
 ```rb
 module TestHelpers
@@ -707,7 +713,7 @@ module TestHelpers
 end
 ```
 
-When this is included we add a `setup` step primarily responsible for starting the mock server, and a `teardown` step primarily responsible for stopping the mock server. Additionally, the `setup` step gives us a way to run in debug mode, and initializes a `stripe_helper` (an object that exposes some convenience methods like `create_plan`), `default_mocked_customer_id`, and `default_plan_id` instance variables we can use throughout our tests.
+When this is included, we add a `setup` step primarily responsible for starting the mock server, and a `teardown` step primarily responsible for stopping the mock server. Additionally, the `setup` step gives us a way to run in debug mode, and initializes a `stripe_helper` (an object that exposes some convenience methods like `create_plan`), `default_mocked_customer_id`, and `default_plan_id` instance variables we can use throughout our tests.
 
 ### Monkey patching `stripe-ruby-mock` 🙈
 
@@ -747,9 +753,11 @@ class UserTest < ActiveSupport::TestCase
 end
 ```
 
-After including the mixin which we mentioned sets our tests up to use the `stripe-ruby-mock` stuffs, we define a test case for fetching and reloading a Stripe customer. First, we pull out `mal` user, and make sure to start `stripe_customer` returns `nil`. Then we create a `Stripe::Customer` and associate it with our `mal` user. At this point, we're communicating with the mock Stripe API provided to us by `stripe-ruby-mock`. Next we check that calling `stripe_customer` on `mal` returns the `Stripe::Customer` we just created. Then we create a second `Stripe::Customer` which we can use to check 1) that our memoization works and 2) that we can override it by passing `reload: true` to the `stripe_customer` method.
+After including the mixin, which we mentioned sets our tests up to use the `stripe-ruby-mock` stuffs, we define a test case for fetching and reloading a Stripe customer.
 
-One nice thing about this test is it flows like other tests -- we create some data, update an existing user record, and assert that the `mal` behaves the way we expect him to. Sure, we could accomplish similar by stubbing `Stripe::Customer.retrieve` to return a stub that responds to id, but then we're more testing the code is _written_ the way we expect. Think about it this way, we'd write this test the exact same way if we were actually hitting Stripe's servers!
+First, we pull out the `mal` user, and make sure `stripe_customer` initially returns `nil`. Then we create a `Stripe::Customer` and associate it with our `mal` user. At this point, we're communicating with the mock Stripe API provided to us by `stripe-ruby-mock`. Next we check that calling `stripe_customer` on `mal` returns the `Stripe::Customer` we just created. Then we create a second `Stripe::Customer` which we can use to check 1) that our memoization works and 2) that we can override it by passing `reload: true` to the `stripe_customer` method.
+
+One nice thing about this test is it flows like other tests -- we create some data, update an existing user record, and assert that `mal` behaves the way we expect him to. Sure, we could accomplish similar by stubbing `Stripe::Customer.retrieve` to return a stub that responds to `id`, but then we're more testing the code is _written_ the way we expect. Think about it this way, we'd write this test the exact same way if we were actually hitting Stripe's servers!
 
 ### A handler test
 
@@ -789,12 +797,12 @@ class Nutmeg::Stripe::CardHandlerTest < ActiveSupport::TestCase
 end
 ```
 
-First, we use that `stripe_helper` instance given to use by `stripe-ruby-mock` to generate a Stripe token, create a `Stripe::Customer`, and update `mal` to be associated with that customer. Then we tell our handler to add the card, exactly like the `Nutmeg::Stripe.add_card` method would that we use in our controller. Lastly, we just verify that `mal` was changed in all the ways we'd expect after having his card updated.
+First, we use that `stripe_helper` instance given to use by `stripe-ruby-mock` to generate a Stripe token, create a `Stripe::Customer`, and update `mal` to be associated with that customer. Then we tell our handler to add the card -- exactly like the `Nutmeg::Stripe.add_card` method would, that we use in our controller. Lastly, we just verify that `mal` was changed in all the ways we'd expect after having his card updated.
 
 
 ### A controller test
 
-A controller test is sort of the next level up for us. Here's the controller test for essentially the same scenario, adding a card:
+A controller test is sort of the next level up for us. Here's the controller test for essentially the same scenario -- adding a card:
 
 ```rb
 require 'test_helper'
@@ -829,9 +837,9 @@ class Settings::BillingsControllerTest < ActionDispatch::IntegrationTest
 end
 ```
 
-This time, we generate the token and instead of passing it one of our handler classes, we post it to our `BillingsController#create` action _exactly as the form would_, if the user had been interacting with our app. Then it's just a matter of verifying our user went through the same series of changes.
+This time, we generate the token, and instead of passing it one of our handler classes, we post it to our `BillingsController#create` action -- _exactly as the form would_ if the user had been interacting with our app. Then it's just a matter of verifying our user went through the same series of changes.
 
-Let's look at one more type of test, when a card has an issue on Stripe's end, like it gets declined:
+Let's look at one more type of test. Here's how we can test what our app does when a card has an issue on Stripe's end, like for example, if it gets declined:
 
 ```rb
 # still in Settings::BillingsControllerTest
@@ -850,11 +858,15 @@ def test_catches_card_error_when_adding_a_card_to_the_user
 end
 ```
 
-The only difference in the setup between this test and the last one, is the call to `StirpeMock.prepare_error`. This tells the mock API server that we'd like our attempt to create a new customer with a new card to genearte an error as if the card was declined. From there, it's just matter of testing that a `stripe_customer_id` isn't saved on the user record and that the view shows the flash message we'd expect. By extension, that tests that our `with_stripe_error_handling` method does what we'd expect and that our `Nutmeg::Stripe::Response` class can be properly interrogated for the cause of the error. Again, without us needing to stub out any of the details of the actual code -- like without stubbing `Nutmeg::Stripe.add_card` or `Nutmeg::Stripe::CardHandler#add`.
+The only difference in the setup between this test and the last one, is the call to `StirpeMock.prepare_error`. This tells the mock API server that we'd like our attempt to create a new customer with a new card to genearte an error as if the card was declined. From there, it's just matter of testing that a `stripe_customer_id` isn't saved on the user record, and that the view shows the flash message we'd expect.
+
+By extension, this also tests that our `with_stripe_error_handling` method does what we'd expect, and that our `Nutmeg::Stripe::Response` class can be properly interrogated for the cause of the error. Again, without us needing to stub out any of the details of the actual code.
 
 ### A system test
 
-At this point, the only part of our integration we haven't really been able to test is the JavaScript we wrote to properly submit our Stripe form, and it's a fairly considerable amount of code! We'll write a test that runs in an actual browser -- a system test -- to do so.
+At this point, the only part of our integration we haven't really been able to test is the JavaScript we wrote to properly initialize and submit our Stripe form. That's a fairly considerable amount of code!
+
+To test it, we'll write a test that simulates a user interacting with our app through an actual browser -- a system test.
 
 ```rb
 require "application_system_test_case"
@@ -956,7 +968,9 @@ class StripeFormsTest < ApplicationSystemTestCase
 end
 ```
 
-Ok, there's a lot here. Let's take it pieces. The first thing we do is finally write a stub of our own. When we submit the form, it'll be handled by the `Settings::BillingsController#create` action, and we know the main thing that action will do is punt to `Nutmeg::Stripe.add_card`. So that's where we stub. I think this is fair, because here we're no longer concerned with our server's Stripe integration -- we've tested that elsewhere -- we're mostly concerned with testing how our form behaves on the client. Here's that stub:
+Ok, there's a lot here, but I think it's useful to first see it all together. Now, let's take it in pieces.
+
+The first thing we do is finally write a stub of our own. When we submit the form, it'll be handled by the `Settings::BillingsController#create` action, and we know the main thing that action will do is punt to `Nutmeg::Stripe.add_card`. So that's where we stub. I think this is fair, because here we're no longer concerned with our server's Stripe integration -- we've tested that elsewhere -- we're mostly concerned with testing how our form behaves on the client. Here's that stub:
 
 ```rb
 top_level_stub_called = false
@@ -970,9 +984,11 @@ Nutmeg::Stripe.stub(:add_card, ->(account, token, email) {
 end
 ```
 
-When `Nutmeg::Stripe.add_card` is called inside the block, the lambda we passed will be called instead. Before declaring the stub, we set a `top_level_stub_called` boolean to `false`. When the lambda is called, we immediately flip it to `true`, then we can assert that it's true at the end of the test. Perhaps this is overkill, but it gives us some assurance the test is behaving the way we expect 🤷‍♂️ Other than that inside the lambda, we assert that the parameters we were passed, which are what would have been passed to `Nutmeg::Stripe.add_card` and ultimately have come from the form, are what we expect them to be. Lastly, it returns an object that responds to `ok?` and returns `true` -- essentially a stub for an instance of `Nutmeg::Stripe::Response`.
+When `Nutmeg::Stripe.add_card` is called inside the block, the lambda we passed will be called instead. Before declaring the stub, we set a `top_level_stub_called` boolean to `false`. When the lambda is called, we immediately flip it to `true`, then we can assert that it's true at the end of the test. Perhaps this is overkill, but it gives us some assurance the test is behaving the way we expect 🤷‍♂️
 
-Ok, let's jump to the bottom. At the very end of the test file, we have some private helpers functions. Mostly, they help us find elements on the page in a way that reads nicely in the actual body of the test -- like a mini DSL for just this test. I do want to look at the `in_iframe_for` a little closer though:
+Other than that, inside the lambda we assert that the parameters we were passed -- which are what would have been passed to `Nutmeg::Stripe.add_card` and ultimately have come from the form -- are what we expect them to be. Lastly, it returns an object that responds to `ok?` and returns `true` -- essentially a stub for an instance of `Nutmeg::Stripe::Response`.
+
+Next, let's jump to the bottom. At the very end of the test file, we have some private helper functions. Mostly, they help us find elements on the page in a way that reads nicely in the actual body of the test -- like a mini DSL for just this test. Let's look at the `in_iframe_for` helper a little closer though:
 
 ```rb
 def in_iframe_for(input, &block)
@@ -1003,7 +1019,7 @@ in_iframe_for(:card_number) do
 end
 ```
 
-Ok, so we pass it an identifier for the input whose iframe we'd like to switch to, and then a block for what we'd like to do while switched to that iframe. The `in_iframe_for` method first saves off a reference to our `current_window`, then it determines a selector using the identifier we provided (in this case `:card_number`), then it tells selenium to switch to that iframe. Once switched, it executes the block. Lastly, it ensures that once we're done executing the block, we switch back to that `current_window` we saved off originally.
+Ok, so we pass it an identifier for the input whose iframe we'd like to switch to, and then a block for what we'd like to do while switched to that iframe. The `in_iframe_for` method first saves off a reference to our `current_window`, then, using the identifier we provided, it determines a selector that will find the iframe, and it tells selenium to switch to that iframe. Once switched, it executes the block. Lastly, it ensures that once we're done executing the block, we switch back to the `current_window` we saved off originally.
 
 Kinda gnarly, but essential for testing our Stripe form 😬
 
@@ -1038,18 +1054,20 @@ assert page.has_content?("Credit card updated") # successful flash message
 assert top_level_stub_called
 ```
 
-Hopefully, that reads a lot like English 😍 Most of the test just deals with filling in the various Stripe inputs. For the card number  input, you can see the first thing we do is fill it with just `4242`. After that, we can verify that an error message about that card number being incomplete shows up. This is finally testing the JavaScript side of our Stripe integration. Firstly, just being able to switch to the card number input and fill it in means we've properly initialized the form using Stripe Elements. Secondly, we're verifying that when Stripe hands our `CreditCardFormController#handleChange` function an error, we properly add that error message to the DOM.
+Hopefully, that reads a lot like English 😍 Most of the test just deals with filling in the various Stripe inputs.
 
-Next up, we finish filling in that card input form. We have to use a bit of a hack to slow down the inputting -- I'm not 100% sure whose fault this is, but without that slow down we could end up with card numbers like `4424 242...`, which is invalid. Anyway, once the card number input is properly filled out, we verify that that error message is removed.
+For the card number  input, you can see the first thing we do is fill it with just `4242`. After that, we can verify that an error message about that card number being incomplete shows up. This is finally testing the JavaScript side of our Stripe integration! Firstly, just being able to switch to the card number input and fill it in means we've properly initialized the form using Stripe Elements. Secondly, we're verifying that when Stripe hands our `CreditCardFormController#handleChange` function an error, we properly add that error message to the DOM.
+
+Next up, we finish filling in that card input form. We have to use a bit of a hack to slow down the inputting. I'm not 100% sure whose fault this is, but without that slow down we could end up with card numbers like `4424 242...`, which are invalid. Anyway, once the card number input is properly filled out, we verify that that error message is removed.
 
 ☝️Then we repeat that process for the expiration and csv inputs.
 
-With everything filled out, we submit the form by clicking the "Save" button, our stub kicks in calling that lambda which houses a couple assertions about proper params, and we verify the user is show the successful flash message.
+Once every input is filled out, we submit the form by clicking the "Save" button. At this point, our stub kicks in calling that lambda which houses a couple assertions about proper params, and we verify the user is shown the successful flash message.
 
 With that, every level of our Stripe integration is tested in an automated and repeatable way ✅
 
 ## Conclusion 🎉
 
-All of this code can be found [here](https://github.com/gkemmey/nutmeg). You can run the example just by adding your own Stripe test account credentials, and you can run the tests without even doing that! Hopefully, this write up makes it easier to jump in and take a look 👀
-
 Stripe certainly makes it easy to hit the ground running, but I think it's much harder to know if you've set things up the right way. This was a shot at that. If can point to something we did wrong, or think of a way to do things better, I'd love to hear about it!
+
+Again, all of this code can be found [here](https://github.com/gkemmey/nutmeg). You can run the example just by adding your own Stripe test account credentials, and you can run the tests without even doing that! Hopefully, this write up makes it easier to jump in and take a look 👀
