@@ -65,3 +65,31 @@ code {
     max-width: 43rem;
   }
 }
+
+.caption {
+  margin-top: -0.5rem; /* there's a margin-bottom: 1rem; on all the p tags */
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9a9a9a !important; /* stolen from .post-date */
+}
+
+.message {
+  padding: 0;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #f9f5fe;
+}
+
+.message .message-body {
+  border-color: #bd93f9;
+  color: #661cd0;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 0 0 0 4px;
+  padding: 1.25em 1.5em;
+}
+
+.message .message-body a,
+.message .message-body strong {
+  color: #661cd0;
+}
