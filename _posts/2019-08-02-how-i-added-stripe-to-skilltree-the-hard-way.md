@@ -569,9 +569,9 @@ Ok, before we look at those handlers, let's take a quick look at the `StripeEven
 
 ### The `StripeEvent` model (not to be confused with `Stripe::Event` from `stripe-ruby`)
 
-Firstly, Stripe says it's possible they'll send you the same event more than once, but because of our unique validation this table serves as a record of already handled events when we're determining whether we need to process an event from Stripe.
+First, Stripe says it's possible they'll send you the same event more than once, but because of our unique validation this table serves as a record of already handled events when we're determining whether we need to process an event from Stripe.
 
-Secondly, this class provides a slightly nicer API around the `Stripe::Event` object. All `Stripe::Event` records respond to `.data.object`. Depending upon the type of event, the type of object returned from that chain of method calls will be different. For example, if it's a `charge.refunded` event, `.data.object` returns a `Stripe::Charge` object; if it's a `customer.subscription.trial_will_end` event, `.data.object` returns a `Stripe::Subscription` object.
+Second, this class provides a slightly nicer API around the `Stripe::Event` object. All `Stripe::Event` records respond to `.data.object`. Depending upon the type of event, the type of object returned from that chain of method calls will be different. For example, if it's a `charge.refunded` event, `.data.object` returns a `Stripe::Charge` object; if it's a `customer.subscription.trial_will_end` event, `.data.object` returns a `Stripe::Subscription` object.
 
 So to make this a little nicer to work with, we first memoize access to the underlying event object:
 
@@ -1056,7 +1056,7 @@ assert top_level_stub_called
 
 Hopefully, that reads a lot like English 😍 Most of the test just deals with filling in the various Stripe inputs.
 
-For the card number  input, you can see the first thing we do is fill it with just `4242`. After that, we can verify that an error message about that card number being incomplete shows up. This is finally testing the JavaScript side of our Stripe integration! Firstly, just being able to switch to the card number input and fill it in means we've properly initialized the form using Stripe Elements. Secondly, we're verifying that when Stripe hands our `CreditCardFormController#handleChange` function an error, we properly add that error message to the DOM.
+For the card number  input, you can see the first thing we do is fill it with just `4242`. After that, we can verify that an error message about that card number being incomplete shows up. This is finally testing the JavaScript side of our Stripe integration! First, just being able to switch to the card number input and fill it in means we've properly initialized the form using Stripe Elements. Second, we're verifying that when Stripe hands our `CreditCardFormController#handleChange` function an error, we properly add that error message to the DOM.
 
 Next up, we finish filling in that card input form. We have to use a bit of a hack to slow down the inputting. I'm not 100% sure whose fault this is, but without that slow down we could end up with card numbers like `4424 242...`, which are invalid. Anyway, once the card number input is properly filled out, we verify that that error message is removed.
 
