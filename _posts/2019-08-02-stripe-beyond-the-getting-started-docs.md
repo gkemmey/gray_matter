@@ -4,13 +4,13 @@ title: 'Stripe: Beyond the "Getting Started" Docs'
 published: true
 ---
 
-I've been working with Stripe recently for my latest project, [Skilltree](https://www.skilltree.us). Getting a robust, well-tested integration out the door feels rather involved, and worse it doesn't seem like there's a lot of implementations out there you can reference. So I wanted to show you what I came up with.
+I've been working with Stripe recently for my latest project, [Skilltree](https://www.skilltree.us). Getting a robust, well-tested integration out the door feels rather involved, and worse, it doesn't seem like there's a lot of implementations out there you can reference. So I wanted to show you what I came up with.
 
 If it helps you, great! If you think I did something wrong and want to tell me about it, even better!
 
 <div class="message">
   <div class="message-body">
-    <strong>Disclaimer time:</strong> I wouldn't blindly copy this code. This isn't a stackoverflow answer -- I'm not entirely sure it's just the best way to do things. It's just the best I've put together, thus far.
+    <strong>Disclaimer time:</strong> I wouldn't blindly copy this code. This isn't a stackoverflow answer -- I'm not entirely sure it's the best way to do things. It's just the best I've put together, thus far.
   </div>
 </div>
 
@@ -25,8 +25,8 @@ Let's start with a look at what we'd like to accomplish:
 5. You can cancel at anytime and finish out the month you've paid for (a la Netflix or Hulu or GitHub)
 6. If you don't have a credit card set, when you click to start a subscription, we should ask you for credit card info
 7. If you have credit card info (say you started a subscription, cancelled, and are starting again), and you click to start a subscription, we can skip a form entirely
-8. You can add credit card info without starting a subscription -- though that's admittedly an odd work flow why should we stand in the way of it (this'll make more sense when you see the page structure)
-9. We need to detect when stripe is no longer able to charge their card and adjust their account status accordingly
+8. You can add credit card info without starting a subscription -- though that's admittedly an odd workflow, why should we stand in the way of it (this'll make more sense when you see the page structure)
+9. We need to detect when stripe is no longer able to charge the user's card and adjust their account status accordingly
 10. Display past payments
 
 For posterity's sake, here's the notes I took trying to figure out how it might work ([one]({{ site.github.url}}/public/images/2019-08-02/stripe_notes_page_one.jpg), [two]({{ site.github.url}}/public/images/2019-08-02/stripe_notes_page_two.jpg), [three]({{ site.github.url}}/public/images/2019-08-02/stripe_notes_page_three.jpg), [four]({{ site.github.url}}/public/images/2019-08-02/stripe_notes_page_four.jpg)). And here's the finished result:
@@ -56,9 +56,10 @@ If you look through our requirements again, there's really four Stripe-related a
 3. Add a card
 4. Remove a card
 
->There's actually a fifth action we want to be able to take, and thats sync. I mention it in passing down below when we talk about Stripe events and webhooks, but essentially syncing is just querying Stripe and making sure their customer record and updating our user record to match. Anyway, it's included in the code below, because it works the same way as the other four, and if you want to know more about how it's used I'd encourage you to go look at the [repo](https://github.com/gkemmey/nutmeg).
+TODO purple block
+>There's actually a fifth action we want to be able to take, and that's sync. I mention it in passing down below when we talk about Stripe events and webhooks, but essentially syncing is just querying Stripe and making sure their customer record matches ours and updating ours if needed. Anyway, it's included in the code below, because it works the same way as the other four, and if you want to know more about how it's used I'd encourage you to go look at the [repo](https://github.com/gkemmey/nutmeg).
 
-Let's like to start there. My guiding star 🌟 when writing code that I don't know what the final shape should be is to write the code I wished I had. In this case, I know I want to be able to write something like `Nutmeg::Stripe.subscribe(user)`. And that's exactly what this module is for:
+Let's start there. My guiding star 🌟 when writing code that I don't know what the final shape should be is to write the code I wished I had. In this case, I know I want to be able to write something like `Nutmeg::Stripe.subscribe(user)`. And that's exactly what this module is for:
 
 ```rb
 module Nutmeg
@@ -127,7 +128,10 @@ module Nutmeg
 end
 ```
 
-As you can see, we wrap a call to `yield` in a `begin / rescue` which gives us the error handling. If we get an error, we wrap it in an `Nutmeg::Stripe::Response` object, tell it to send an error notification, and then return it. (That's what `tap` let's us do, call a method on a thing, while the result of evaluating `tap` still returns the receiver of `tap`.)
+As you can see, we wrap a call to `yield` in a `begin / rescue` which gives us the error handling. If we get an error, we wrap it in an `Nutmeg::Stripe::Response` object, tell it to send an error notification, and then return it.
+
+TODO put this in a purple box with something like "If your unfamiliar with tap, it's shorthand in ruby for this code like this:..."
+(That's what `tap` let's us do, call a method on a thing, while the result of evaluating `tap` still returns the receiver of `tap`.)
 
 #### The `Nutmeg::Stripe::Response` object
 
@@ -180,6 +184,7 @@ module Nutmeg
 end
 ```
 
+TODO purple
 >If you look in the repo there's some commented out code (😱) around providing more details about the error. The intent was to provide a consistent api for not just interrogating the type of error, but more specific details about that error, too. Thus far, that didn't really prove necessary. Along those lines, I was originally thinking you could stick more details about your success in here, too. That's why the initializer takes more attributes, but I'm not using any but `error`, hence the lone `attr_accessor :error`.
 
 Anyway, we've already seen where `Nutmeg::Stripe::Response#send_through_exception_notfier` is used. In case you're not familiar, [exception_notification](https://github.com/smartinez87/exception_notification) is a super handy gem that makes it trivially easy to have your Rails app email about errors. That's what this is doing, notifying us about the error while still handling it so we can present a nicer message to the user.
@@ -190,7 +195,7 @@ The rest of those query methods are used in the controllers, which we'll get to,
 
 All the handlers follow a similar pattern: an initializer that holds some data they'll need to do their job, one or more public instance methods that do the work of communicating with Stripe's API and updating our `User` record, and a slew of private methods that help them do that work.
 
-Those public instance method _always_ return an instance of `Nutmeg::Stripe::Response`.
+Those public instance methods _always_ return an instance of `Nutmeg::Stripe::Response`.
 
 In the case of our `CardHandler` object, there's a public `#add` method and a public `#remove` method:
 
@@ -241,11 +246,11 @@ module Nutmeg
 end
 ```
 
->Remember I said `Response` was setup to handle including additional details about successes, too? Well, I opted not to do that and instead keep success notifications to the user more high-level, which we'll see in the controller. But that's why we return `Nutmeg::Stripe::Response.new` without any arguments -- it's just a response without an error.
+We return `Nutmeg::Stripe::Response.new` without any arguments -- it's just a response without an error.
 
 Ok, I submit you could read the `#add` method, and without knowing how to code, you could tell me what it does 😍
 
-If you look, we declare accessors for `customer` and `card`. Those are so private helper methods like `create_stripe_customer_and_card` can do their work, and then set our newly created `Stripe::Customer` and `Stripe::Card` objects so they can be used elsewhere. In this case, we use them both in the `#user_params` method to access information like `customer.email` and `card.last4`. That implementation isn't shown, but it knows how to take those Stripe records, and persist the information we're also interested in saving in our database to the user.
+If you look, we declare accessors for `customer` and `card`. Those are so private helper methods like `create_stripe_customer_and_card` can do their work, and then capture our newly created `Stripe::Customer` and `Stripe::Card` objects so they can be used elsewhere. In this case, we use them both in the `#user_params` method to access information like `customer.email` and `card.last4`. That implementation isn't shown, but it knows how to take those Stripe records, and persist the information we're also interested in saving in our database to the user.
 
 Also, notice we don't have to do any error handling in our handler classes, because we always wrap their usage in that `with_stripe_error_handling` method.
 
@@ -253,9 +258,7 @@ With that, let's go look at the controller that leverages this handler.
 
 ### The `Settings::BillingsController`
 
-Hmmm, now that I'm writing this, `BillingsController` might be a suspect name, but it's the controller that deals with adding or removing a credit card from the user's Stripe account.
-
-We don't deal with editing or updating per se, because updating always loads the new form, at which point you submit back to the `#create` action which both creates a new card and tramples over the old one.
+`BillingsController` is the controller that deals with adding or removing a credit card from the user's Stripe account. We don't deal with editing or updating per se, because updating always loads the new form, at which point you submit back to the `#create` action which both creates a new card and tramples over the old one.
 
 ```rb
 class Settings::BillingsController < ApplicationController
@@ -315,11 +318,11 @@ class Settings::BillingsController < ApplicationController
 end
 ```
 
-Finally, you can see in `#create` we use our top-level of action helper -- `Nutmeg::Stripe#add_card`. Remember, we'll get a `Nutmeg::Stripe::Response` object back no matter what happens in `#add_card`. The rest of the controller action, just interrogates that response object to figure out 1) where to go next and 2) what message to show the user.
+Finally, you can see in `#create` that we use our top-level action helper -- `Nutmeg::Stripe#add_card`. Remember, we'll get a `Nutmeg::Stripe::Response` object back no matter what happens in `#add_card`. The rest of the controller action, just interrogates that response object to figure out 1) where to go next and 2) what message to show the user.
 
 I think that's an incredibly pleasing setup that communicates what the controller does, without overloading you on details. As you need those details, you can dig deeper.
 
-`Nutmeg::Stripe#flash_for` is a method we haven't looked at, but it just gets a flash message from an indentifier.
+`Nutmeg::Stripe#flash_for` is a method we haven't looked at, but it just gets a flash message from an identifier.
 
 A bit of weirdness is the `#validate_email` method. We let the user provide an email with their credit card info, which we'll send billing related notices to. We want to validate that email, but we don't exactly have a normal model-flow to utilize. I opted instead to check it at the time they post the form, and if it doesn't look valid we 1) set a flash message we can use to show the issue in the form and 2) redirect back to the form. A fair compromise, I think 🤷‍♂️
 
@@ -343,8 +346,9 @@ First up, here's how we generate the actual `<form>` tag:
                                     } do |f| %>
 ```
 
-We turn the default Rails ajax submitting functionality off, so we can handle the submitting manually. And to do that we attach a [stimulus](https://github.com/stimulusjs/stimulus) controller to the form, with an action that'll run when the form is submitted.
+We turn the default Rails ajax submit functionality off, so we can handle the submit manually. And to do that we attach a [stimulus](https://github.com/stimulusjs/stimulus) controller to the form, with an action that'll run when the form is submitted.
 
+TODO purple
 >Explaining stimulus is beyond the scope of this post, but essentially, it is a framework for organizing your JavaScript and attaching functionality through data attributes. It's nothing you couldn't do yourself with `$(document).on`, but removes a lot of the boilerplate and enforces some conventions. Plus, it works fantastically with [turbolinks](https://github.com/turbolinks/turbolinks).
 
 All you gotta know is when this form is submitted, the `handleSubmit` function on the stimulus controller will be run.
@@ -357,7 +361,7 @@ Our `email` field is standard Rails stuff, but here's how we add the error to it
 <% end %>
 ```
 
-Then we have the three stripe fields: `number`, `expiry`, and `csv`. All of them are setup similarly, let's look at the markup for just the `number`:
+Then we have the three stripe fields: `number`, `expiry`, and `csv`. All of them are setup similarly; let's look at the markup for just the `number`:
 
 ```erb
 <div class="field">
@@ -458,7 +462,7 @@ handleSubmit(event) {
 }
 ```
 
-When we submit the form, this handler takes that `tokenizableStripeElement` we got from Stripe Elements and asks Stripe to create a token from it. If that process works, we add the token as a hidden input to our form, and submit it. At this point, our form only has the email and that token inputs when it submits to our server. Magic! 🔮
+When we submit the form, this handler takes that `tokenizableStripeElement` we got from Stripe Elements and asks Stripe to create a token from it. If that process works, we add the token as a hidden input to our form, and submit it. At this point, our form only has two `<input>` tags (email and token), which it submits to our server. Magic! 🔮
 
 If Stripe can't make a token, we run the `handleChange` function to display whatever error occurred under our credit card number input.
 
