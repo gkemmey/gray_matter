@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Stripe is Kinda F$@#ing Hard <😤>'
+title: 'Stripe docs are great, but not enough'
 published: true
 ---
 
@@ -11,7 +11,7 @@ The number of tabs it takes to add Stripe to a website, and I've done it twice b
 
 Integrating Stripe is really hard. Or I guess, knowing if you've done it right is. I understand that's an unfair complaint, because Stripe is so much easier than what came before it, but still 🤷‍♂️
 
-You know that motivational poster that pictures an iceberg cut by the waterline, and the small portion above the water is labeled "success", but a much larger portion is below water labeled things like "late nights", "perseverance", "ridicule", etc.? That's what working with Stripe is like -- "Checkout: Quick Start" above water and "Checkout vs Checkout (beta) vs Stripe.js and Elements", "automated testing", "subscription states", "webhooks" all below. There's a ton of complexity hidden by those "start getting paid in 10 minutes" type tutorials. But don't worry, it's only payment processing 😬
+You know that motivational poster that pictures an iceberg cut by the waterline, and the small portion above the water is labeled "success", but a much larger portion below water is labeled things like "late nights", "perseverance", "ridicule", etc.? That's what working with Stripe is like -- "Checkout: Quick Start" above water and "Checkout vs Checkout (beta) vs Stripe.js and Elements", "automated testing", "subscription states", "webhooks" all below. There's a ton of complexity hidden by those "start getting paid in 10 minutes" type tutorials. But don't worry, it's only payment processing 😬
 
 Documentation seems overly focussed on the simplest of workflows. I guess I'd rather have to read a single document for a week that is _explicit_ in pitfalls / scenarios / things you gotta do / has a structure, then read a smattering of scattered docs all showing me just the simplest thing that "works" and have to discover all the other things over the course of many weeks.
 
@@ -19,13 +19,17 @@ Documentation seems overly focussed on the simplest of workflows. I guess I'd ra
 
 And documentation isn't the only issue. Testing is basically left entirely as an exercise to the reader. I've used Stripe on three different personal projects. Sometimes my tests have been more rudimentary than I'd like. On my [latest project](https://www.skilltree.us), however, I tried to improve the testing methodology around my Stripe integration. And it was surprisingly difficult!
 
-The actual test environment Stripe gives you is amazing, but it doesn't seem your automated tests should hit that. Others seem to agree, too. After `bundle install`-ing `stripe-ruby`,wouldn't it be cool if you could do [something like this](https://github.com/gkemmey/stripe_testing_poc):
+The actual test environment Stripe gives you is amazing, but it doesn't seem your automated tests should hit that. After `bundle install`-ing `stripe-ruby`, wouldn't it be cool if you could do [something like this](https://github.com/gkemmey/stripe_testing_poc):
 
 ![stripe_testing]({{ site.github.url }}/public/images/2019-05-04/example_run.gif)
 
 Stripe lacks support for this kind of testing. So much so that there's at least [two](https://github.com/adrienverge/localstripe) [projects](https://github.com/rebelidealist/stripe-ruby-mock) I've seen just attempting to reverse-engineer a mock API server.
 
->I actually used the second link, and I intend to write more about that implementation. I think it's good (and if it's not, I'd love to learn why), but it still required a PR upstream and monkey patch just to make testing work 😬 Stay tuned!
+<div class="message yellow">
+  <div class="message-body">
+    I actually used the second link, and I intend to write more about that implementation. I think it's good (and if it's not, I'd love to learn why), but it still required a PR upstream and monkey patch just to make testing work 😬 Stay tuned!
+  </div>
+</div>
 
 Payment integration seems too important for that. My example is _definitely_ just a proof of concept, but it uses Stripe's first-party [stripe-mock](https://github.com/stripe/stripe-mock) and [stripe-ruby](https://github.com/stripe/stripe-ruby) projects.
 

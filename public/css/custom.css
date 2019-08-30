@@ -93,3 +93,16 @@ code {
 .message .message-body strong {
   color: #661cd0;
 }
+
+.message.yellow {
+  background-color: #fefff5;
+}
+.message.yellow .message-body {
+  border-color: #f1fa8c;
+  color: #34370c;
+}
+
+.message.yellow .message-body a,
+.message.yellow .message-body strong {
+  color: #34370c;
+}

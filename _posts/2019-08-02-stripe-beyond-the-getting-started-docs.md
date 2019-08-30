@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'How I Added Stripe to Skilltree: The Hard Way'
+title: 'Stripe: Beyond the "Getting Started" Docs'
 published: true
 ---
 
@@ -1068,6 +1068,6 @@ With that, every level of our Stripe integration is tested in an automated and r
 
 ## Conclusion 🎉
 
-Stripe certainly makes it easy to hit the ground running, but I think it's much harder to know if you've set things up the right way. This was a shot at that. If can point to something we did wrong, or think of a way to do things better, I'd love to hear about it!
+Stripe certainly makes it easy to hit the ground running, but I think it's much harder to know if you've set things up the right way. This was a shot at that. If you can point to something we did wrong, or think of a way to do things better, I'd love to hear about it!
 
 Again, all of this code can be found [here](https://github.com/gkemmey/nutmeg). You can run the example just by adding your own Stripe test account credentials, and you can run the tests without even doing that! Hopefully, this write up makes it easier to jump in and take a look 👀
