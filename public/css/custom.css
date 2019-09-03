@@ -40,6 +40,10 @@ figure {
   margin: 0rem;
 }
 
+figure.highlight pre {
+  border-radius: 4px;
+}
+
 pre {
   /* don't wrap code, overflow it */
   overflow: auto;
@@ -64,4 +68,54 @@ code {
   .content, .container {
     max-width: 43rem;
   }
+}
+
+.caption {
+  margin-top: -0.5rem; /* there's a margin-bottom: 1rem; on all the p tags */
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9a9a9a !important; /* stolen from .post-date */
+}
+
+.message {
+  padding: 0;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #f9f5fe;
+}
+
+.message .message-body {
+  border-color: #bd93f9;
+  color: #661cd0;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 0 0 0 4px;
+  padding: 1.25em 1.5em;
+}
+
+.message .message-body a,
+.message .message-body strong {
+  color: #661cd0;
+}
+
+.message .message-body a {
+  text-decoration: underline;
+}
+
+.message .message-body p:last-child,
+.message .message-body div.highlight:last-child {
+  margin-bottom: 0;
+}
+
+.message.yellow {
+  background-color: #fefff5;
+}
+.message.yellow .message-body {
+  border-color: #f1fa8c;
+  color: #34370c;
+}
+
+.message.yellow .message-body a,
+.message.yellow .message-body strong {
+  color: #34370c;
 }

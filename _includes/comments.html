@@ -2,9 +2,9 @@
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES * * */
     var disqus_shortname = 'gray-matter';
-    var disqus_identifier = "{{ page.permalink }}";
-    var disqus_title = "{{ page.title }}";
-    
+    var disqus_identifier = '{{ page.permalink | replace: "'", "\'" }}';
+    var disqus_title = '{{ page.title | replace: "'", "\'" }}';
+
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
