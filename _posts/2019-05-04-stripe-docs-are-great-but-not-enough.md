@@ -28,6 +28,8 @@ Stripe lacks support for this kind of testing. So much so that there's at least 
 <div class="message">
   <div class="message-body">
 I actually used the second link, and I intend to write more about that implementation. I think it's good (and if it's not, I'd love to learn why), but it still required a PR upstream and monkey patch just to make testing work 😬 Stay tuned!
+
+**Update:** [Link]({{ site.github.url }}/2019/09/02/stripe-beyond-the-getting-started-docs/) to that follow up post.
   </div>
 </div>
 
