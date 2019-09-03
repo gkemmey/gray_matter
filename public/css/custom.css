@@ -40,6 +40,10 @@ figure {
   margin: 0rem;
 }
 
+figure.highlight pre {
+  border-radius: 4px;
+}
+
 pre {
   /* don't wrap code, overflow it */
   overflow: auto;
@@ -92,6 +96,15 @@ code {
 .message .message-body a,
 .message .message-body strong {
   color: #661cd0;
+}
+
+.message .message-body a {
+  text-decoration: underline;
+}
+
+.message .message-body p:last-child,
+.message .message-body div.highlight:last-child {
+  margin-bottom: 0;
 }
 
 .message.yellow {

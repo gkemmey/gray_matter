@@ -25,9 +25,9 @@ The actual test environment Stripe gives you is amazing, but it doesn't seem you
 
 Stripe lacks support for this kind of testing. So much so that there's at least [two](https://github.com/adrienverge/localstripe) [projects](https://github.com/rebelidealist/stripe-ruby-mock) I've seen just attempting to reverse-engineer a mock API server.
 
-<div class="message yellow">
+<div class="message">
   <div class="message-body">
-    I actually used the second link, and I intend to write more about that implementation. I think it's good (and if it's not, I'd love to learn why), but it still required a PR upstream and monkey patch just to make testing work 😬 Stay tuned!
+I actually used the second link, and I intend to write more about that implementation. I think it's good (and if it's not, I'd love to learn why), but it still required a PR upstream and monkey patch just to make testing work 😬 Stay tuned!
   </div>
 </div>
 
