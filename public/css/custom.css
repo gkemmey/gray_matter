@@ -119,3 +119,9 @@ code {
 .message.yellow .message-body strong {
   color: #34370c;
 }
+
+/* stolen from: https://github.com/tailwindcss/tailwindcss/blob/master/stubs/defaultConfig.stub.js#L191 */
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-bottom: 4px;
+}

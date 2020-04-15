@@ -66,7 +66,7 @@ Here is an image of that PDF, because it's important:
 
 ![text pdf as png]({{ site.github.url }}/public/images/2020-04-12/text_pdf_as_png.png)
 
-So we can draw text boxes by specifing the top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). You see that third `overflow` mode, `shrink_to_fit`? That's gonna be useful when we're filling out our forms 😄
+So we can draw text boxes by specifying the top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). You see that third `overflow` mode, `shrink_to_fit`? That's gonna be useful when we're filling out our forms 😄
 
 ### combine_pdf
 
@@ -112,4 +112,259 @@ That example 1) shows all the pieces and 2) is incredibly useful for figuring ou
 
 ## A compete example 📝
 
-I've been doing this web dev thing for a while now, and I can't believe no one's shared this with me.
+### Hold up a second
+
+I'm gonna show you what I did to fill out these OSHA forms. I think it's cool, but there's arguments for it being overcomplicated 🤷‍♂️ It did make it easier to do the next one though. Anyway, you don't have to keep reading -- that grid example has everything you need. At the end of the day, it's just calls to that `text_box` method with options for where to draw it on the paper like so:
+
+```ruby
+pdf.text_box "message", at: [148, 360.0],
+                        width: 40,
+                        height: 14,
+                        valign: :bottom,
+                        overflow: :shrink_to_fit,
+                        size: 7
+```
+
+And examples from `combine_pdf's` [README](https://github.com/boazsegev/combine_pdf#add-content-to-existing-pages-stamp--watermark) to save the two PDFs as one. That's it!
+
+I've been doing this web dev thing for a while now, and I can't believe this is a PDF solution I'm just now hearing about. To think it was just buried in a reddit post!
+
+### Ok, let's over engineer 🤖
+
+Looking at that OSHA Form 300, you can see there's lots of fields on there you're going to want to fill out the same way -- i.e. share styles. Sharing styles, as far as `prawn` is concerned, is really just options passed to `text_box`.
+
+So that's what I wanted, some way to communicate where cells (or fields) on the PDF are and share the like styles, so we're not repeating options to the `text_box` method over and over. When I find myself in that position -- knowing roughly what I want, but not sure how to build it -- I like to start by writing the code I wish I had. Here's what I wrote:
+
+```ruby
+class PDF::Form300
+  default_cell_height 14
+  default_cell_font_size ->(options) { options[:height] }
+  default_cell_valign :bottom
+  default_cell_overflow :shrink_to_fit
+
+  cell_type :field, font_size: 7
+
+  field :establishment_name, x: 658, y: 465, width: 110, height: 12
+end
+```
+
+That feels like we're getting somewhere! Well, ish. It doesn't work, but what we want is starting to take shape:
+
+1. We have named individual areas of the form we need to fill out "cells"
+2. We can set defaults that will apply to all cells using the `default_cell_x` methods
+3. We can override those defaults with defaults that will apply to a type of cell using the `cell_type` method
+4. We can use those "cell types" to identify the actual parts of the form we need to fill in, where they're located, and override any of those shared defaults on a per-cell basis
+
+Let's keep going:
+
+```ruby
+class PDF::Form300
+  Y_OF_TOP_LEFT_CORNER_FOR_PAGE_TOTAL_CELLS = 142 # ✨new
+
+  default_cell_height 14
+  default_cell_font_size ->(options) { options[:height] }
+  default_cell_valign :bottom
+  default_cell_overflow :shrink_to_fit
+
+  cell_type :field,      font_size: 7
+  cell_type :page_total, y: Y_OF_TOP_LEFT_CORNER_FOR_PAGE_TOTAL_CELLS, width: 15,    # ✨new
+                                                                       height: 10,   # ✨new
+                                                                       align: :right # ✨new
+  cell_type :check_box, width: 6, height: 6, style: :bold, align: :center, valign: :center # ✨new
+
+  field :establishment_name, x: 658, y: 465, width: 110, height: 12
+
+  page_total :classified_as_death_page_total, x: 476 # ✨new
+  page_total :resulted_in_injury_page_total,  x: 680, width: 10 # ✨new
+end
+```
+
+Here's those page totals for reference:
+
+<div class="shadow-md">
+![page totals]({{ site.github.url }}/public/images/2020-04-12/page_totals.png)
+</div>
+
+How clean is that?! We can share all those styles and the `y` position, and just specify the `x`! Ok, and change the width for the smaller ones 😬
+
+The last thing I wanted to be able to do was describe a table. Each page of the form contains essentially a table of incidents. Each cell in that table not only shares styles, but also positioning (at least relative to the top-left cell). Here's the code I wrote for that:
+
+```ruby
+class PDF::Form300
+  Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL = 360
+  SPACE_IN_BETWEEN_INCIDENT_ROWS = 16.5
+
+  # ... all the stuff from our last example ...
+
+  table y:      Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL,
+        offset: SPACE_IN_BETWEEN_INCIDENT_ROWS do |t|
+
+    field :case_number,   x: 29, width: 18
+    field :employee_name, x: 53, width: 82
+
+    check_box :classified_as_death, x: 480, y: 353, offset: (t.offset + 0.1)
+  end
+end
+```
+
+We're going to fill out a `case_number` field for each incident we write on the form, but we only defined that cell once. This works because a `table` knows where the first row is (`y`) and the space between each row (`offset`). Positionally, for each field we can give it the `x` and let the table calculate the `y` using `Y_OF_TOP - (row * SPACE_BETWEEN_ROWS)`.
+
+Last thing, checkout the setup for that `classified_as_death` checkbox. We adjusted the amount to offset in between each row by just a little a bit. That's just because the form isn't pixel perfect and the checkboxes weren't spaced out perfectly consistently with everything else. What's cool is we can override the table's `offset` value per cell -- if we need to.
+
+Ok, up to this point, we've just ben writing the code _we wished we had_. Let's make it work! #wdd #wishlistdrivendevelopment
+
+### Making it work ✅
+
+To do so, we're gonna create a mixin -- a module, a concern, they go by many names -- called `PDF::Layout`. But first, a design constraint: whenever we go to fill in cell, I want that to call a distinct method. For example, filling in the `establishment_name` should call `fill_in_establishment_name(name)`. If we get an error, the field that caused it should be easily discoverable in the stack trace. It's a Rails app generating these things from user-supplied data after all.
+
+Given that, calling `field :establishment_name, x: 658, y: 465, width: 110, height: 12` in our `PDF::Form300` class should define an instance method `fill_in_establishment_name` that looks roughly like so:
+
+```ruby
+def fill_in_establishment_name(name)
+  fill_in(name, options) # we dunno where options is gonna come from yet
+end
+```
+
+That `fill_in` method would be the thing that finally calls `pdf.text_box`. Let's start there:
+
+```ruby
+module PDF
+  module Layout
+    extend ActiveSupport::Concern
+
+    def fill_in(value, options = {})
+      _options = options.transform_values { |v|
+                           v.respond_to?(:call) ? v.call(options) : v
+                         }
+
+      _options[:at] = [_options.delete(:x), _options.delete(:y)]
+      _options[:size] = _options.delete(:font_size)
+
+      if outline_text_boxes?
+        pdf.stroke_color "4299e1"
+        pdf.stroke_rectangle(_options[:at], _options[:width], _options[:height])
+      end
+
+      pdf.text_box(value.to_s, _options)
+    end
+  end
+end
+```
+
+First things first, `fill_in` takes the `options` it got and calls any of the "callable" values giving them those same `options`. That let's us take an option like `{ font_size: ->(options) { options[:height] } }` and resolve it to `{ font_size: whatever_height_is_set_to }` just before we finally ready to write to the PDF.
+
+Then we turn our `x` and `y` options in to a single `at` option that takes them as an array, and we turn `font_size` into `size`. These changes just improve (in my opinion) the API of `prawn`'s `text_box` method.
+
+Then we check if we should draw the outline of the `text_box`, and if so, do so. I find that's helpful in development.
+
+Lastly, we call `pdf.text_box` passing along those options.
+
+Great, that's the final stop of our DSL -- we're kinda working backwards. Let's add what we need to make DSL methods work. Next up, the `default_cell_x` methods:
+
+```ruby
+module PDF
+  module Layout
+    extend ActiveSupport::Concern
+
+    included do
+      class_attribute :defaults, instance_accessor: false
+      self.defaults = {}
+    end
+
+    class_methods do
+      def default_cell_height(value)
+        self.defaults[:height] = value
+      end
+
+      def default_cell_valign(value)
+        self.defaults[:valign] = value
+      end
+
+      def default_cell_overflow(value)
+        self.defaults[:overflow] = value
+      end
+
+      def default_cell_font_size(value)
+        self.defaults[:font_size] = value
+      end
+    end
+
+    # ... fill_in ...
+  end
+end
+```
+
+So when `PDF::Layout` is included, we setup a class variable `defaults` to our defaults that apply to all cells. Each `default_cell_x` method just sets a key in that hash equal to the value you gave it.
+
+Ok, here's where things kinda go to shit 💩implementing that DSL. If you look back at our `PDF::Form300` class we had code like this:
+
+```ruby
+class PDF::Form300
+  cell_type :field, font_size: 7
+
+  field :establishment_name, x: 658, y: 465, width: 110, height: 12
+end
+```
+
+Do you see what happened there? After calling `cell_type :field` we have access to a newly-defined class method `field`. DSL's are pure fucking magic, don't let anyone tell you otherwise 🔮 Anyway, let's attempt to demystify a bit:
+
+```ruby
+module PDF
+  module Layout
+    extend ActiveSupport::Concern
+
+    included do
+      # ... defaults class variable setup ...
+    end
+
+    class_methods do
+      # ... default_cell_x methods ...
+
+      def cell_type(type, type_defaults = {})
+        define_method "defaults_for_#{type}" do                 # 1
+          type_defaults.dup                                     # 1
+        end                                                     # 1
+
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1              # 2
+          def self.#{type}(name, defaults_for_cell = {})        # 2
+            define_method "fill_in_\#{name}" do |value|         # 2 # 3
+              fill_in(value, **self.class.defaults,             # 2 # 3
+                             **defaults_for_#{type},            # 2 # 3
+                             **defaults_for_cell)               # 2 # 3
+            end                                                 # 2 # 3
+          end                                                   # 2
+        RUBY
+      end
+    end
+
+    # ... fill_in ...
+  end
+end
+```
+
+Lulz, what the fuck even is Ruby? Don't worry! If you'll allow my crude annotations we can take this in pieces:
+
+1. (Lines with `#1`) -- This section defines a new instance method called `defaults_for_#{type}`. In our case, let's imagine we've just called `cell_type :field, font_size: 7`. `type` is `:field`, so this creates an instance method called `defaults_for_field`.
+
+    Importantly, it defines this method using the method `define_method` that takes a block. This block is closure that maintains access to our second argument to `cell_type`, the `type_defaults` hash. In our case, `type_defaults` is a hash like `{ font_size: 7 }`.
+
+    What this means is any instance of our `PDF::Form300` class can call `defaults_for_field` to get back a copy of that hash that was passed to `cell_type :field`.
+
+2. (Lines with `#2`) -- This section defines the `field` class method we know calling `cell_type :field` needs to create for us. `class_eval` takes a string of Ruby code -- all that yellow text ☝️ -- and evaluates it for us in the context of the class. That string of Ruby code defines our `field` method.
+
+    If we ditch the lines marked with a `#3` for a minute, and substitute `:field` for `type`, here's what that same section looks like:
+
+    ```ruby
+    class_eval <<-RUBY, __FILE__, __LINE__ + 1
+      def self.field(name, defaults_for_cell = {})
+      end
+    RUBY
+    ```
+
+    Nothing wild there, we're defining a class method `field` that takes a `name` and a hash of `defaults_for_cell`.
+
+3. (Lines with `#3`) -- Now, when we call `field` (or any of our methods defined by calling `cell_type`) we need to create an instance method for filling in that single cell. Assuming we had called `field :establishment_name`, the instance method we're creating is called `fill_in_establishment_name`, and it takes a single argument, `value`.
+
+    Once again, we turn to `define_method` and a block closed over `defaults_for_cell` so the instance method `fill_in_establishment_name` can maintain access to the options we passed when we called `field :establishment_name`.
+
+    When you call `fill_in_establishment_name`, it passes `value` to the `fill_in` method, and spreads in (`**`) all the different option hashes starting with our `defaults`, then any `defaults_for_field`, then any `defaults_for_cell` -- each, in turn, overriding any options that were set before.
