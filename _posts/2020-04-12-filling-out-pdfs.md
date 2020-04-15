@@ -114,18 +114,24 @@ That example 1) shows all the pieces and 2) is incredibly useful for figuring ou
 
 ### Hold up a second
 
-I'm gonna show you what I did to fill out these OSHA forms. I think it's cool, but there's arguments for it being overcomplicated 🤷‍♂️ It did make it easier to do the next one though. Anyway, you don't have to keep reading -- that grid example has everything you need. At the end of the day, it's just calls to that `text_box` method with options for where to draw it on the paper like so:
+I'm gonna show you what I did to fill out these OSHA forms. I think it's cool, but there's arguments for it being overcomplicated 🤷‍♂️ Although, once I had it working for one form, it did make it easier to do the next one. Anyway, you don't have to keep reading -- that grid example has everything you need.
 
-```ruby
-pdf.text_box "message", at: [148, 360.0],
-                        width: 40,
-                        height: 14,
-                        valign: :bottom,
-                        overflow: :shrink_to_fit,
-                        size: 7
+At the end of the day, all you need are:
+
+1. Calls to that `text_box` method with options for where to draw it on the page like so:
+
+    ```ruby
+    pdf.text_box "message", at: [148, 360.0],
+                            width: 40,
+                            height: 14,
+                            valign: :bottom,
+                            overflow: :shrink_to_fit,
+                            size: 7
 ```
 
-And examples from `combine_pdf's` [README](https://github.com/boazsegev/combine_pdf#add-content-to-existing-pages-stamp--watermark) to save the two PDFs as one. That's it!
+2. And examples from `combine_pdf's` [README](https://github.com/boazsegev/combine_pdf#add-content-to-existing-pages-stamp--watermark) to save the two PDFs as one.
+
+That's it!
 
 I've been doing this web dev thing for a while now, and I can't believe this is a PDF solution I'm just now hearing about. To think it was just buried in a reddit post!
 
@@ -342,7 +348,7 @@ module PDF
 end
 ```
 
-Lulz, what the fuck even is Ruby? Don't worry! If you'll allow my crude annotations we can take this in pieces:
+Lulz, what the fuck even is Ruby? Don't worry! If you'll allow my crude annotations, we can take this in pieces:
 
 1. (Lines with `#1`) -- This section defines a new instance method called `defaults_for_#{type}`. In our case, let's imagine we've just called `cell_type :field, font_size: 7`. `type` is `:field`, so this creates an instance method called `defaults_for_field`.
 
@@ -368,3 +374,203 @@ Lulz, what the fuck even is Ruby? Don't worry! If you'll allow my crude annotati
     Once again, we turn to `define_method` and a block closed over `defaults_for_cell` so the instance method `fill_in_establishment_name` can maintain access to the options we passed when we called `field :establishment_name`.
 
     When you call `fill_in_establishment_name`, it passes `value` to the `fill_in` method, and spreads in (`**`) all the different option hashes starting with our `defaults`, then any `defaults_for_field`, then any `defaults_for_cell` -- each, in turn, overriding any options that were set before.
+
+Ok, that explains everything but `table`. If you remember our `table` example it looked like this:
+
+```ruby
+class PDF::Form300
+  Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL = 360
+  SPACE_IN_BETWEEN_INCIDENT_ROWS = 16.5
+
+  table y:      Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL,
+        offset: SPACE_IN_BETWEEN_INCIDENT_ROWS do |t|
+
+    field :case_number,   x: 29, width: 18
+    field :employee_name, x: 53, width: 82
+
+    check_box :classified_as_death, x: 480, y: 353, offset: (t.offset + 0.1)
+  end
+end
+```
+
+As we've just seen, normally calling `field :case_number` would create `fill_in_case_number` method takes just a `value` to write into the PDF. But notice `table` takes a block. Inside the block, we're gonna make it so calling `field :case_number` creates a `fill_in_case_number` that _not only_ takes a `value` argument, but a `row` keyword argument too. It'll then use that `row` argument and the `y` and `offset` options passed to `table` to calculate the `y` for the cell.
+
+Ok, here's the `table` class method defined in our mixin:
+
+```ruby
+module PDF
+  module Layout
+    extend ActiveSupport::Concern
+
+    included do
+      # ... defaults class variable setup ...
+    end
+
+    class_methods do
+      # ... default_cell_x methods ...
+
+      # ... cell_type method ...
+
+      def table(y:, offset:, &block)
+        Table.new(klass: self, y: y, offset: offset).evaluate(&block)
+      end
+    end
+
+    # ... fill_in ...
+  end
+end
+```
+
+Ignoring the `Table` class we haven't seen yet, the `table` method's not too bad. It creates a new `Table` passing along `self` (the class that has included the mixin and called `table` -- `PDF::Form300` in our case), `y`, and `offset` to the new `Table` instance, and asks the `Table` instance to evaluate the block.
+
+Here's the `Table` class:
+
+```ruby
+module PDF
+  module Layout
+    extend ActiveSupport::Concern
+
+    class Table
+      attr_accessor :klass, :y, :offset
+
+      def initialize(attributes = {})
+        attributes.each { |name, value| send("#{name}=", value) }
+      end
+
+      def evaluate(&block)                                              # 1
+        instance_eval(&block)                                           # 1
+      end                                                               # 1
+
+      def define_fill_in_method(type, name, defaults_for_cell = {})
+        _offset = defaults_for_cell.delete(:offset) || offset
+        _y = defaults_for_cell.delete(:y) || y
+
+        klass.send(:define_method, "fill_in_#{name}") do |value, row:|  # 3
+          fill_in(value, **self.class.defaults,                         # 3
+                         **send("defaults_for_#{type}"),                # 3
+                         **defaults_for_cell,                           # 3
+                         y: _y - (row * _offset))                       # 3
+        end                                                             # 3
+      end
+
+      def method_missing(name, *args, &block)
+        # is this a type defined by a call to cell_type? if so, it will
+        # have told the klass to define this method.
+        if klass.method_defined?("defaults_for_#{name}")                # 2
+          # a little confusing, name here is the method name. for us,
+          # that's a cell_type.
+          define_fill_in_method(name, *args)                            # 2
+        else
+          super
+        end
+      end
+    end
+
+    included do
+      # ... defaults class variable setup ...
+    end
+
+    class_methods do
+      # ... default_cell_x methods ...
+
+      # ... cell_type method ...
+
+      def table(y:, offset:, &block)
+        Table.new(klass: self, y: y, offset: offset).evaluate(&block)
+      end
+    end
+
+    # ... fill_in ...
+  end
+end
+```
+
+One more set of crude annotations:
+
+1. (Lines with `#1`) -- The `evaluate` method. This just passes the block to `instance_eval` which runs the block, but makes it so while executing the block `self` is set to our `Table` instance. Meaning, inside the block we pass to `table`, when we call `field :case_number`, our `Table` instance receives that call to `field`.
+
+    Again, lulz, what the fuck even is Ruby?
+
+2. (Lines with `#2`) -- But of course, `Table` doesn't have a `field` instance method, so we handle that in `method_missing`. Whenever a `Table` instance receives a method it doesn't have defined, it asks `klass`, "Hey, is this method really a `cell_type` you know about?". If so, our `Table` instance can do the work of defining a `fill_in_x` instance method _on `klass`_ that takes a `row` argument and automagically calculates the `y` argument for `pdf.text_box`.
+
+3. (Lines with `#3`) -- And this section does just that. Note, it's nothing we haven't seen before. Assuming we had called `field :case_number` inside our `table` block, we're still using `define_method` to create an instance method called `fill_in_case_number`, and when that's called passing a `value` and our merged options along to the `fill_in` method. The only new thing, `fill_in_case_number` takes a `row` argument that it uses with `Table#y` and `Table#offset` to calculate the `y` of this cell and provide that as an option to the `fill_in` method.
+
+Ok, that's it for our `table` method. With that, the DSL we wished we could right works!
+
+### Putting it all together
+
+Here's our final PDF class (with some redactions for brevity):
+
+```ruby
+class PDF::Form300
+  include PDF::Layout
+
+  Y_OF_TOP_LEFT_CORNER_FOR_PAGE_TOTAL_CELLS = 142
+  Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL = 360
+  SPACE_IN_BETWEEN_INCIDENT_ROWS = 16.5
+  INCIDENT_ROWS_PER_SHEET = 13
+
+  default_cell_height 14
+  default_cell_font_size ->(options) { options[:height] }
+  default_cell_valign :bottom
+  default_cell_overflow :shrink_to_fit
+
+  cell_type :field,      font_size: 7
+  cell_type :page_total, y: Y_OF_TOP_LEFT_CORNER_FOR_PAGE_TOTAL_CELLS, width: 15,
+                                                                       height: 10,
+                                                                       align: :right
+  cell_type :check_box, width: 6, height: 6, style: :bold, align: :center, valign: :center
+
+  field :establishment_name, x: 658, y: 465, width: 110, height: 12
+  page_total :classified_as_death_page_total, x: 476
+
+  table y: Y_OF_TOP_LEFT_CORNER_OF_FIRST_INCIDENT_CELL,
+        offset: SPACE_IN_BETWEEN_INCIDENT_ROWS do |t|
+
+    field :case_number, x: 29,  width: 18
+    check_box :classified_as_death, x: 480,   y: 353,   offset: (t.offset + 0.1)
+  end
+
+  # ... more layout stuffs ...
+
+  def self.generate(incidents, attributes = {})
+    new(incidents, attributes).generate
+  end
+
+  # ... initializer / accessor stuffs ...
+
+  def pdf
+    @pdf ||= Prawn::Document.new(page_layout: :landscape, page_size: "LETTER", margin: 0)
+  end
+
+  def generate
+    incidents.each_slice(INCIDENT_ROWS_PER_SHEET).
+              each_with_index do |incidents_group, page|
+
+      pdf.start_new_page unless page.zero?
+
+      fill_in_establishment_name(location.name)
+
+      fill_in_classified_as_death_page_total \
+        incidents_group.count(&:classified_as_death?)
+
+      incidents_group.each_with_index do |incident, row|
+        fill_in_case_number          incident.case_number,
+                                     row: row
+        fill_in_classified_as_death  check_mark(incident.classified_as_death?),
+                                     row: row
+      end
+    end
+
+    write_pdf
+  end
+
+  private
+
+    def check_mark(boolean)
+      boolean ? "X" : ""
+    end
+end
+```
+
+Finally, making the PDF is a matter of calling the `fill_in_x` -- like `fill_in_establishment_name` -- methods our DSL creates. In this example, that happens in the `generate` method. You can see a working version of generating this OSHA Form 300 [here](), as well as here's direct links to the [mixin]() and [pdf class]().
