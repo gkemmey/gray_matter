@@ -18,7 +18,7 @@ I've done PDFs before, with all the usual suspects -- [`wkhtmltopdf`](https://wk
 
 Here's how it works:
 
-1. We use `prawn` for making a brand new PDF with just the form fields filled out on white paper. It's text boxes and text with no background floating in white space.
+1. We use `prawn` to make a brand new PDF with just the form fields filled out on white paper. It's text boxes and text with no background floating in white space.
 2. We the use `combine_pdf` to lay those answers on top of the original PDF, and save that as a new PDF.
 
 That's it! Just Ruby libraries. No binary package dependencies. Simple and elegant 👌
@@ -62,15 +62,17 @@ Prawn::Document.generate("out/text.pdf") do
 end
 ```
 
-Here is an image of that PDF, because it's important:
+Here is an image of that PDF, so we can talk about it:
 
+<div class="shadow-md">
 ![text pdf as png]({{ site.github.url }}/public/images/2020-04-12/text_pdf_as_png.png)
+</div>
 
-So we can draw text boxes by specifying the top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). You see that third `overflow` mode, `shrink_to_fit`? That's gonna be useful when we're filling out our forms 😄
+`text_box` is the single most important method `prawn` gives us. It let us draw a text boxes by specifying its top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). Also, it's worth noting that third `overflow` mode, `shrink_to_fit`. I don't know what dark magic `prawn` is using to do automagically shrink text for us, but it's incredibly useful when filling out form fields on our PDFs 🔮
 
 ### combine_pdf
 
-Unsurprisingly, `combine_pdf` let's us...combine PDFs. For our purposes, it's the magic that lets us take the filled out content we generated with `prawn` and lay it on top of the original form. Let's take a look at an example that draws a grid on our form, like <a href="{{ site.github.url }}/public/images/2020-04-12/osha_form_300_with_grid.pdf" target="\_blank">this</a> PDF:
+Unsurprisingly, `combine_pdf` let's us...combine PDFs. Specifically, it lets us take the field content we generated with `prawn` and lay it on top of the original form. Let's take a look at an example that draws a grid on our form, like <a href="{{ site.github.url }}/public/images/2020-04-12/osha_form_300_with_grid.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 # make a grid sheet
@@ -108,17 +110,19 @@ form.pages[0] << grid
 form.save("out/osha_form_300_with_grid.pdf")
 ```
 
-That example 1) shows all the pieces and 2) is incredibly useful for figuring out where to draw our text boxes on the real thing.
+So that's all the pieces put together -- `prawn` and `combine_pdf` 🤝 As a bonus, being able to lay a grid over our original PDF is incredibly useful for figuring out where we should draw our text boxes when we're filling out the form.
 
-## A compete example 📝
+## A more compete example 📝
 
 ### Hold up a second
 
-I'm gonna show you what I did to fill out these OSHA forms. I think it's cool, but there's arguments for it being overcomplicated 🤷‍♂️ Although, once I had it working for one form, it did make it easier to do the next one. Anyway, you don't have to keep reading -- that grid example has everything you need.
+I'm wanna show you what I did to fill out these [OSHA Forms](https://www.osha.gov/recordkeeping/new-osha300form1-1-04-FormsOnly.pdf). I think there's some interesting Ruby involved, but there's arguments for it being overcomplicated 🤷‍♂️
+
+Anyway, you don't have to keep reading -- that grid example has everything you need.
 
 At the end of the day, all you need are:
 
-1. Calls to that `text_box` method with options for where to draw it on the page like so:
+1. Calls to `prawn`'s text_box method with options for where to draw it on the page like so:
 
     ```ruby
     pdf.text_box "message", at: [148, 360.0],
@@ -127,9 +131,9 @@ At the end of the day, all you need are:
                             valign: :bottom,
                             overflow: :shrink_to_fit,
                             size: 7
-```
+    ```
 
-2. And examples from `combine_pdf's` [README](https://github.com/boazsegev/combine_pdf#add-content-to-existing-pages-stamp--watermark) to save the two PDFs as one.
+2. And to use `combine_pdf` to save the two PDFs as one, which they literally provide as an example in their [README](https://github.com/boazsegev/combine_pdf#add-content-to-existing-pages-stamp--watermark)
 
 That's it!
 
@@ -137,9 +141,17 @@ I've been doing this web dev thing for a while now, and I can't believe this is 
 
 ### Ok, let's over engineer 🤖
 
-Looking at that OSHA Form 300, you can see there's lots of fields on there you're going to want to fill out the same way -- i.e. share styles. Sharing styles, as far as `prawn` is concerned, is really just options passed to `text_box`.
+Go look at that OSHA Form 300 in the link above. If you do, you might notice there's lots of fields on there you're going to want to fill out the same way -- i.e. share styles. Sharing styles, as far as `prawn` is concerned, is really just sharing options passed to `text_box`.
 
-So that's what I wanted, some way to communicate where cells (or fields) on the PDF are and share the like styles, so we're not repeating options to the `text_box` method over and over. When I find myself in that position -- knowing roughly what I want, but not sure how to build it -- I like to start by writing the code I wish I had. Here's what I wrote:
+So it'd be nice if whatever we come up with has some way to share like styles amongst different fields on our form, so we're not repeating options to the `text_box` method over and over. Additionally, we also need to specify at least some options on a case-by-case basis. For example, most fields probably have their own `x` and `y`.
+
+<div class="message">
+  <div class="message-body">
+It's worth noting, I took a first pass at generating that form that did not share styles. It was essentially individual calls to `text_box`, each with their own options hash. Implementing it once (badly) does help illuminate what's missing 😬
+  </div>
+</div>
+
+When I find myself knowing roughly what I want, but not sure how to implement it, I like to start by writing the code I wish I had. So let's start there. Let's write code that looks like could do more or less what we outlined above:
 
 ```ruby
 class PDF::Form300
@@ -154,14 +166,16 @@ class PDF::Form300
 end
 ```
 
-That feels like we're getting somewhere! Well, ish. It doesn't work, but what we want is starting to take shape:
+None of that works of course, but it does communicate some things about our eventual solution:
 
-1. We have named individual areas of the form we need to fill out "cells"
-2. We can set defaults that will apply to all cells using the `default_cell_x` methods
-3. We can override those defaults with defaults that will apply to a type of cell using the `cell_type` method
-4. We can use those "cell types" to identify the actual parts of the form we need to fill in, where they're located, and override any of those shared defaults on a per-cell basis
+1. Individual areas of the form we need to fill out are called "cells"
+2. Defaults that will apply to all cells can be created using the `default_cell_height`, `default_cell_font_size`, `default_cell_valign`, and `default_cell_overflow` methods
+3. Different types of cells with their own defaults can be created using the `cell_type` method
+4. Creating a "cell type" creates a new method -- `field` in the code above -- that can be used to specify a named cell we need to fill in with its own options like where it's located and it's width
 
-Let's keep going:
+While the code we wrote doesn't indicate this is true, let's also go ahead and say each set of options overrides the ones that have come before it. Meaning, options passed to a named cell override options set on the cell type, which override options set as defaults of all cells.
+
+Let's add some more, still just wishfully thinking:
 
 ```ruby
 class PDF::Form300
@@ -180,20 +194,40 @@ class PDF::Form300
 
   field :establishment_name, x: 658, y: 465, width: 110, height: 12
 
-  page_total :classified_as_death_page_total, x: 476 # ✨new
+  page_total :classified_as_death_page_total, x: 476            # ✨new
   page_total :resulted_in_injury_page_total,  x: 680, width: 10 # ✨new
 end
 ```
 
-Here's those page totals for reference:
+<div class="message">
+  <div class="message-body">
+If you haven't yet looked at the [OSHA Form 300](https://www.osha.gov/recordkeeping/new-osha300form1-1-04-FormsOnly.pdf), go do so. This code will make more sense if you have an idea of what that PDF looks like in your head.
+  </div>
+</div>
+
+Notice we've defined a new cell type, `page_total`, and then we used it to create to new named cells: `classified_as_death_page_total` and `resulted_in_injury_page_total`. As a bit of foreshadowing and to help better visualize, here's what those `page_totals` (and all the others) look like filled out -- you know, after we make all this code work:
 
 <div class="shadow-md">
 ![page totals]({{ site.github.url }}/public/images/2020-04-12/page_totals.png)
 </div>
 
-How clean is that?! We can share all those styles and the `y` position, and just specify the `x`! Ok, and change the width for the smaller ones 😬
+Take a look at how styles are being shared for our `page_totals`. In the call to `cell_type`, we give them all the same `y`, `width`, `height`, and text alignment (`align`). Then when we define the cell for `classified_as_death_page_total` all we have to give it is the `x`! And that's true for the first six cells in the image.
 
-The last thing I wanted to be able to do was describe a table. Each page of the form contains essentially a table of incidents. Each cell in that table not only shares styles, but also positioning (at least relative to the top-left cell). Here's the code I wrote for that:
+Additionally, when we define the cell for `resulted_in_injury_page_total` we give it a `width` in addition to the `x`. Look at the image again. Notice the last six cells are little thinner. The `width` we passed to `resulted_in_injury_page_total` (and will pass to the other five cells, too) _overrides_ the `width of 15` in our cell type. But all of those `page_total` cells in that image are (or will be) created using the `page_total` method.
+
+Ok, let's add one last snippet of wishlist code. If you look at the OSHA Form 300 one more time, you might notice that the form is essentially a table of incidents. The borders aren't drawn, but there's columns like "Case no." and "Employee's name", and there's thirteen rows where we can put incident information. In fact, there's eighteen columns in that table. So we could think of that as 234 (`13 * 18`) different cells on our form, but we don't have to.
+
+Consider the first column, "Case no.": All thirteen cells for "Case no." on our form are going to share the same styles except one -- the `y`. Right? Their top-left corner's will all have the same `x`, they'll all have the same `height`, `width`, etc.
+
+So for our last bit of wishlist code, instead of defining each case number cell like:
+
+```ruby
+field :case_number_one, y: 360,   x: 29, width: 18
+field :case_number_two, y: 344.5, x: 29, width: 18
+# ... 11 more times ....
+```
+
+Let's make it so we can define it once, but as a part of a table. Like this:
 
 ```ruby
 class PDF::Form300
@@ -213,11 +247,19 @@ class PDF::Form300
 end
 ```
 
-We're going to fill out a `case_number` field for each incident we write on the form, but we only defined that cell once. This works because a `table` knows where the first row is (`y`) and the space between each row (`offset`). Positionally, for each field we can give it the `x` and let the table calculate the `y` using `Y_OF_TOP - (row * SPACE_BETWEEN_ROWS)`.
+A `table` knows two things: 1) they `y` of its first (top-left-most) cell and 2) how much space to put in between each row (`offset`). From there, if indicate the `row` of the `case_number` we want to fill out, the `table` can calculate the `y` for us using `Y_OF_TOP - (row * SPACE_BETWEEN_ROWS)`.
 
-Last thing, checkout the setup for that `classified_as_death` checkbox. We adjusted the amount to offset in between each row by just a little a bit. That's just because the form isn't pixel perfect and the checkboxes weren't spaced out perfectly consistently with everything else. What's cool is we can override the table's `offset` value per cell -- if we need to.
+Last thing, our table wishlist snippet does is make it possible to override the `offset` a column should use. So when we're calculating the y for a `classified_as_death` cell, instead of using `row * 16.5`, we'll use `row * 16.6`. Turns out those check boxes in that column have just a little more space in between each row, and it's surprisingly noticeable if we don't adjust the `offset`:
 
-Ok, up to this point, we've just ben writing the code _we wished we had_. Let's make it work! #wdd #wishlistdrivendevelopment
+<div class="table-with-images table-with-centered-columns scale-image-height-25-percent">
+
+| `offset = 16.5` | `offset = 16.6` |
+| --------------- | --------------- |
+| ![checkboxes bad]({{ site.github.url }}/public/images/2020-04-12/checkboxes_with_bad_offset.png) | ![checkboxes good]({{ site.github.url }}/public/images/2020-04-12/checkboxes_with_good_offset.png) |
+
+</div>
+
+Ok, that's everything...that we...uh..._wish_ we could do, lol 🌠 Let's make it work! #wishdrivendevelopment
 
 ### Making it work ✅
 
@@ -528,7 +570,7 @@ class PDF::Form300
         offset: SPACE_IN_BETWEEN_INCIDENT_ROWS do |t|
 
     field :case_number, x: 29,  width: 18
-    check_box :classified_as_death, x: 480,   y: 353,   offset: (t.offset + 0.1)
+    check_box :classified_as_death, x: 480, y: 353, offset: (t.offset + 0.1)
   end
 
   # ... more layout stuffs ...
@@ -573,4 +615,4 @@ class PDF::Form300
 end
 ```
 
-Finally, making the PDF is a matter of calling the `fill_in_x` -- like `fill_in_establishment_name` -- methods our DSL creates. In this example, that happens in the `generate` method. You can see a working version of generating this OSHA Form 300 [here](), as well as here's direct links to the [mixin]() and [pdf class]().
+Finally, making the PDF is just a matter of calling the `fill_in_x` -- like `fill_in_establishment_name` -- methods our DSL creates. In this example, that happens in the `generate` method. You can see a full, working version of generating this OSHA Form 300 [here](), as well as here's direct links to the [mixin]() and [pdf class](). Also, here's the [final, filled-out PDF]() running that full version creates.
