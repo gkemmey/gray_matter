@@ -80,6 +80,21 @@ code {
   }
 }
 
+@media(min-width: 38em) and (max-width: 48em),
+      (min-width: 58em) {
+  .img-scaled { text-align: center; }
+  .img-scaled img { display: inline; margin-bottom: 0; }
+  .img-scaled.down-50 img { height: 50%; width: 50%; }
+  .img-scaled.down-80 img { height: 80%; width: 80%; }
+}
+
+.img-bordered img {
+  border-style: solid;
+  border-color: #d2d6dc;
+  border-width: 1px;
+  border-radius: 0.375rem;
+}
+
 .caption {
   margin-top: -0.5rem; /* there's a margin-bottom: 1rem; on all the p tags */
   text-align: center;
