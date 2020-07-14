@@ -31,6 +31,16 @@
 .sidebar {
   background-color: #282a36; /* matches dracula background */
 }
+.sidebar-nav {
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap
+}
+@media (min-width: 48em) {
+  .sidebar-nav {
+    display: block;
+  }
+}
 
 /* code */
 
@@ -68,6 +78,21 @@ code {
   .content, .container {
     max-width: 43rem;
   }
+}
+
+@media(min-width: 38em) and (max-width: 48em),
+      (min-width: 58em) {
+  .img-scaled { text-align: center; }
+  .img-scaled img { display: inline; margin-bottom: 0; }
+  .img-scaled.down-50 img { height: 50%; width: 50%; }
+  .img-scaled.down-80 img { height: 80%; width: 80%; }
+}
+
+.img-bordered img {
+  border-style: solid;
+  border-color: #d2d6dc;
+  border-width: 1px;
+  border-radius: 0.375rem;
 }
 
 .caption {
@@ -118,6 +143,98 @@ code {
 .message.yellow .message-body a,
 .message.yellow .message-body strong {
   color: #34370c;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.input-group div {
+  line-height: 1.5;
+  border-width: 0;
+  border-style: solid;
+  border-radius: 0.375rem;
+
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.input-group label + div {
+  margin-top: 0.25rem;
+}
+
+.input-group input {
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+
+  background-color: #ffffff;
+  color: inherit;
+
+  border-style: solid;
+  border-color: #d2d6dc;
+  border-width: 1px;
+  border-radius: 0.375rem;
+
+  margin: 0;
+  padding-top: 0.5rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.input-group input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(164, 202, 254, 0.45);
+  border-color: #a4cafe;
+}
+
+.button {
+  -webkit-appearance: button;
+  cursor: pointer;
+
+  width: 100%;
+
+  background-color: rgba(40, 42, 54, 1); /* #282a36 */
+
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 0.375rem;
+  border-width: 1px;
+
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+
+  margin: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  color: rgba(255, 255, 255, 1);
+
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.button:hover {
+  background-color: rgba(83, 87, 112, 1); /* #535770 */
+}
+
+.button:focus {
+  background-color: rgba(83, 87, 112, 1); /* #535770 */
+
+  border-color: rgba(83, 87, 112, 1); /* #535770 */
+
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(180, 198, 252, 0.45); /* #b4c6fc */
 }
 
 /* stolen from: https://github.com/tailwindcss/tailwindcss/blob/master/stubs/defaultConfig.stub.js#L191 */
