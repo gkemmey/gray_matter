@@ -10,7 +10,7 @@ Luckily, I was ready. A while ago, I had saved a reddit post where `u/CaptainKab
 
 Instead, I'm here to show you the absolute, #1 way to fill out an existing PDF -- any PDF, fillable-form fields or not -- and it comes to us from that very same reddit post with an unassuming comment from `u/hcollider` ([link](https://www.reddit.com/r/rails/comments/8ohntl/generating_pdf_form_with_prawn/e03k552)):
 
-![hcollider's reddit comment]({{ site.github.url }}/public/images/2020-04-12/hcolliders_reddit_comment.png)
+![hcollider's reddit comment]({{ site.github.url }}/public/images/2020-07-17/hcolliders_reddit_comment.png)
 
 Doubt not good sir!
 
@@ -27,7 +27,7 @@ That's it! Just Ruby libraries. No binary package dependencies. Simple and elega
 
 ### prawn
 
-`prawn` let's us create PDFs from text, shapes, and images by drawing on a coordinate plane where `(0, 0)` is the bottom-left-hand corner of a page. For example, this code generates <a href="{{ site.github.url }}/public/images/2020-04-12/rectangle.pdf" target="\_blank">this</a> PDF:
+`prawn` let's us create PDFs from text, shapes, and images by drawing on a coordinate plane where `(0, 0)` is the bottom-left-hand corner of a page. For example, this code generates <a href="{{ site.github.url }}/public/images/2020-07-17/rectangle.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 Prawn::Document.generate("out/rectangle.pdf") do
@@ -41,7 +41,7 @@ Prawn::Document.generate("out/rectangle.pdf") do
 end
 ```
 
-Even more important to our use case of filling out a form, is `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-04-12/text.pdf" target="\_blank">this</a> PDF:
+Even more important to our use case of filling out a form, is `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-07-17/text.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 Prawn::Document.generate("out/text.pdf") do
@@ -65,14 +65,14 @@ end
 Here is an image of that PDF, so we can talk about it:
 
 <div class="img-bordered">
-![text pdf as png]({{ site.github.url }}/public/images/2020-04-12/text_pdf_as_png.png)
+![text pdf as png]({{ site.github.url }}/public/images/2020-07-17/text_pdf_as_png.png)
 </div>
 
 `text_box` is the single most important method `prawn` gives us. It let us draw a text boxes by specifying its top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). Also, it's worth noting that third `overflow` mode, `shrink_to_fit`. I don't know what dark magic `prawn` is using to do automagically shrink text for us, but it's incredibly useful when filling out form fields on our PDFs 🔮
 
 ### combine_pdf
 
-Unsurprisingly, `combine_pdf` let's us...combine PDFs. Specifically, it lets us take the field content we generated with `prawn` and lay it on top of the original form. Let's take a look at an example that draws a grid on our form, like <a href="{{ site.github.url }}/public/images/2020-04-12/osha_form_300_with_grid.pdf" target="\_blank">this</a> PDF:
+Unsurprisingly, `combine_pdf` let's us...combine PDFs. Specifically, it lets us take the field content we generated with `prawn` and lay it on top of the original form. Let's take a look at an example that draws a grid on our form, like <a href="{{ site.github.url }}/public/images/2020-07-17/osha_form_300_with_grid.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 # make a grid sheet
@@ -208,7 +208,7 @@ If you haven't yet looked at the [OSHA Form 300](https://www.osha.gov/recordkeep
 Notice we've defined a new cell type, `page_total`, and then we used it to create to new named cells: `classified_as_death_page_total` and `resulted_in_injury_page_total`. As a bit of foreshadowing and to help better visualize, here's what those `page_totals` (and all the others) look like filled out -- you know, after we make all this code work:
 
 <div class="img-bordered">
-![page totals]({{ site.github.url }}/public/images/2020-04-12/page_totals.png)
+![page totals]({{ site.github.url }}/public/images/2020-07-17/page_totals.png)
 </div>
 
 Take a look at how styles are being shared for our `page_totals`. In the call to `cell_type`, we give them all the same `y`, `width`, `height`, and text alignment (`align`). Then when we define the cell for `classified_as_death_page_total` all we have to give it is the `x`! And that's true for the first six cells in the image.
@@ -255,7 +255,7 @@ Last thing, our table wishlist snippet does is make it possible to override the 
 
 | `offset = 16.5` | `offset = 16.6` |
 | --------------- | --------------- |
-| ![checkboxes bad]({{ site.github.url }}/public/images/2020-04-12/checkboxes_with_bad_offset.png) | ![checkboxes good]({{ site.github.url }}/public/images/2020-04-12/checkboxes_with_good_offset.png) |
+| ![checkboxes bad]({{ site.github.url }}/public/images/2020-07-17/checkboxes_with_bad_offset.png) | ![checkboxes good]({{ site.github.url }}/public/images/2020-07-17/checkboxes_with_good_offset.png) |
 
 </div>
 
