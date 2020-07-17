@@ -64,7 +64,7 @@ end
 
 Here is an image of that PDF, so we can talk about it:
 
-<div class="shadow-md">
+<div class="img-bordered">
 ![text pdf as png]({{ site.github.url }}/public/images/2020-04-12/text_pdf_as_png.png)
 </div>
 
@@ -207,7 +207,7 @@ If you haven't yet looked at the [OSHA Form 300](https://www.osha.gov/recordkeep
 
 Notice we've defined a new cell type, `page_total`, and then we used it to create to new named cells: `classified_as_death_page_total` and `resulted_in_injury_page_total`. As a bit of foreshadowing and to help better visualize, here's what those `page_totals` (and all the others) look like filled out -- you know, after we make all this code work:
 
-<div class="shadow-md">
+<div class="img-bordered">
 ![page totals]({{ site.github.url }}/public/images/2020-04-12/page_totals.png)
 </div>
 
@@ -251,7 +251,7 @@ A `table` knows two things: 1) they `y` of its first (top-left-most) cell and 2)
 
 Last thing, our table wishlist snippet does is make it possible to override the `offset` a column should use. So when we're calculating the y for a `classified_as_death` cell, instead of using `row * 16.5`, we'll use `row * 16.6`. Turns out those check boxes in that column have just a little more space in between each row, and it's surprisingly noticeable if we don't adjust the `offset`:
 
-<div class="table-with-images table-with-centered-columns scale-image-height-25-percent">
+<div class="img-scaled height-down-25">
 
 | `offset = 16.5` | `offset = 16.6` |
 | --------------- | --------------- |

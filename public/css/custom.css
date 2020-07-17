@@ -84,6 +84,7 @@ code {
       (min-width: 58em) {
   .img-scaled { text-align: center; }
   .img-scaled img { display: inline; margin-bottom: 0; }
+  .img-scaled.height-down-25 img { height: 25%; }
   .img-scaled.down-50 img { height: 50%; width: 50%; }
   .img-scaled.down-80 img { height: 80%; width: 80%; }
 }
@@ -235,23 +236,4 @@ code {
 
   outline: 0;
   box-shadow: 0 0 0 3px rgba(180, 198, 252, 0.45); /* #b4c6fc */
-}
-
-/* stolen from: https://github.com/tailwindcss/tailwindcss/blob/master/stubs/defaultConfig.stub.js#L191 */
-.shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  margin-bottom: 4px;
-}
-
-.table-with-images img {
-  display: inline;
-  margin-bottom: 0;
-}
-
-.table-with-centered-columns td {
-  text-align: center;
-}
-
-.scale-image-height-25-percent img {
-  height: 25%;
 }
