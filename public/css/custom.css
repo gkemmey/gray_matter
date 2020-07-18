@@ -129,7 +129,7 @@ code {
 }
 
 .message .message-body p:last-child,
-.message .message-body div.highlight:last-child {
+.message .message-body div.highlighter-rouge:last-child > div.highlight {
   margin-bottom: 0;
 }
 
