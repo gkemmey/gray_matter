@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Filling out PDFs'
+title: 'A Great Way to Generate PDFs with Some Questionable Ruby'
 published: true
 ---
 
@@ -14,7 +14,7 @@ You gotta know when to cut bait, amirite? 🎣
 
 Luckily, buried in that very same reddit post was this rather unassuming comment from `u/hcollider` ([link](https://www.reddit.com/r/rails/comments/8ohntl/generating_pdf_form_with_prawn/e03k552)):
 
-![hcollider's reddit comment]({{ site.github.url }}/public/images/2020-07-17/hcolliders_reddit_comment.png)
+![hcollider's reddit comment]({{ site.github.url }}/public/images/2020-07-18/hcolliders_reddit_comment.png)
 
 Doubt not good sir! This approach is great! That comment is a little light on detail though. Actually, it's all inspiration, but sometimes that's enough. Here's how we can do it:
 
@@ -27,7 +27,7 @@ That's it! Just Ruby libraries. No binary package dependencies. Simple and elega
 
 ### prawn
 
-`prawn` let's us create PDFs from text, shapes, and images by drawing on a coordinate plane where `(0, 0)` is the bottom-left-hand corner of a page. For example, this code generates <a href="{{ site.github.url }}/public/images/2020-07-17/rectangle.pdf" target="\_blank">this</a> PDF:
+`prawn` let's us create PDFs from text, shapes, and images by drawing on a coordinate plane where `(0, 0)` is the bottom-left-hand corner of a page. For example, this code generates <a href="{{ site.github.url }}/public/images/2020-07-18/rectangle.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 Prawn::Document.generate("out/rectangle.pdf") do
@@ -41,7 +41,7 @@ Prawn::Document.generate("out/rectangle.pdf") do
 end
 ```
 
-Even more important to our use case of filling out a form, is `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-07-17/text.pdf" target="\_blank">this</a> PDF:
+Even more important to our use case of filling out a form, is `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-07-18/text.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 Prawn::Document.generate("out/text.pdf") do
@@ -65,7 +65,7 @@ end
 Here is an image of that PDF, so we can talk about it:
 
 <div class="img-bordered">
-![text pdf as png]({{ site.github.url }}/public/images/2020-07-17/text_pdf_as_png.png)
+![text pdf as png]({{ site.github.url }}/public/images/2020-07-18/text_pdf_as_png.png)
 </div>
 
 `text_box` is the single most important method `prawn` gives us. It lets us draw a text box by specifying its top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). The third `overflow` mode in that picture, `shrink_to_fit`, is especially useful when filling out form fields on our PDFs.
@@ -73,7 +73,7 @@ Here is an image of that PDF, so we can talk about it:
 ### combine_pdf
 
 Unsurprisingly, `combine_pdf` let's us...combine PDFs. Ultimately, we'll use it take a PDF of all the form's content, generated with `prawn`, and lay it on top of the original PDF form.
-Here's an example of doing something similar, but instead of filling out the form, we draw a grid on it (<a href="{{ site.github.url }}/public/images/2020-07-17/osha_form_300_with_grid.pdf" target="\_blank">the PDF</a>):
+Here's an example of doing something similar, but instead of filling out the form, we draw a grid on it (<a href="{{ site.github.url }}/public/images/2020-07-18/osha_form_300_with_grid.pdf" target="\_blank">the PDF</a>):
 
 ```ruby
 # make a grid sheet
@@ -258,7 +258,7 @@ If you haven't yet looked at the [OSHA Form 300](https://www.osha.gov/recordkeep
 We've defined a new cell type, `page_total`, and then we used it to define two new cells on the form: `classified_as_death_page_total` and `resulted_in_injury_page_total`. As a bit of foreshadowing and to help better visualize, here's the cells on the form we're calling `page_totals`:
 
 <div class="img-bordered">
-![page totals]({{ site.github.url }}/public/images/2020-07-17/page_totals.png)
+![page totals]({{ site.github.url }}/public/images/2020-07-18/page_totals.png)
 </div>
 
 You can see all twelve of those boxes are super similar. They're all aligned right, all have the same font size, all have the same height, they're all horizontally aligned meaning they're left-hand corners all have the same `y` value.
@@ -307,7 +307,7 @@ Last thing our table wishlist snippet does is make it possible to override the `
 
 | `offset = 16.5` | `offset = 16.6` |
 | --------------- | --------------- |
-| ![checkboxes bad]({{ site.github.url }}/public/images/2020-07-17/checkboxes_with_bad_offset.png) | ![checkboxes good]({{ site.github.url }}/public/images/2020-07-17/checkboxes_with_good_offset.png) |
+| ![checkboxes bad]({{ site.github.url }}/public/images/2020-07-18/checkboxes_with_bad_offset.png) | ![checkboxes good]({{ site.github.url }}/public/images/2020-07-18/checkboxes_with_good_offset.png) |
 
 </div>
 
@@ -694,4 +694,4 @@ Changes to either the layout or the logic of filling in the cells are easy and s
 
 Is the code that enables our PDF form DSL gross? Yeah. It really fucking is. But I think the API in our `PDF::Form300` is worth it. Regardless, hopefully it was a fun look at some wild Ruby 🦁
 
-Anyway, you can see a full, working version of generating this OSHA Form 300 with dummy data [here](https://github.com/gkemmey/filling_out_pdf_form_examples), as well as here are direct links to the [concern](https://github.com/gkemmey/filling_out_pdf_form_examples/blob/master/pdfs/layout.rb) and [pdf class](https://github.com/gkemmey/filling_out_pdf_form_examples/blob/master/pdfs/form300.rb). Lastly, here's the <a href="{{ site.github.url }}/public/images/2020-07-17/osha_form_300_filled.pdf" target="\_blank">final, filled-out PDF</a> running that full version creates.
+Anyway, you can see a full, working version of generating this OSHA Form 300 with dummy data [here](https://github.com/gkemmey/filling_out_pdf_form_examples), as well as here are direct links to the [concern](https://github.com/gkemmey/filling_out_pdf_form_examples/blob/master/pdfs/layout.rb) and [pdf class](https://github.com/gkemmey/filling_out_pdf_form_examples/blob/master/pdfs/form300.rb). Lastly, here's the <a href="{{ site.github.url }}/public/images/2020-07-18/osha_form_300_filled.pdf" target="\_blank">final, filled-out PDF</a> running that full version creates.
