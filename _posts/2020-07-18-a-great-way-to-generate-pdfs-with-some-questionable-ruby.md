@@ -4,11 +4,11 @@ title: 'A Great Way to Generate PDFs with Some Questionable Ruby'
 published: true
 ---
 
-A while ago, I saved this [reddit post](https://www.reddit.com/r/rails/comments/8ohntl/generating_pdf_form_with_prawn/e03k552) about how to fill out a PDF with some data collected in our app. There were some cool sounding ideas in here, and as a web developer it's just a matter of time before you're asked to fill out a paper version of a form.
+A while ago, I bookmarked this [reddit post](https://www.reddit.com/r/rails/comments/8ohntl/generating_pdf_form_with_prawn/e03k552) about generating PDFs. There were some cool sounding ideas in there, and as a web developer, it's only a matter of time before you're asked to fill out a paper version of a form.
 
-Recently for me, the need arose, and I dug back out that reddit post. I've done PDFs before, with the usual suspects -- [wkhtmltopdf](https://wkhtmltopdf.org/) and [wicked_pdf](https://github.com/mileszs/wicked_pdf) -- and it works ok, but never perfectly. It always feels like you're fighting some styling or page break issue. Plus, when the form already exists, do you really want to have to recreate it? So I was eager to try something else.
+I've done PDFs before, with the usual suspects -- [wkhtmltopdf](https://wkhtmltopdf.org/) and [wicked_pdf](https://github.com/mileszs/wicked_pdf) -- and it works ok, but never perfectly. It always feels like you're fighting some styling or page break issue. Plus, when a PDF version form already exists, do you really want to have to recreate it? So I was eager to try something else.
 
-The first approach I tried -- what sounded to me just reading like a really great solution -- was using [pdf-forms](https://github.com/jkraemer/pdf-forms) to programmatically fill out a fillable PDF. Spoiler: this ssssuuuccckkkeedd. After far too long of trying to convert a non-fillable PDF to a fillable PDF using Libre Office, learning more than I ever cared to about [XFA and AcroForm](https://appligent.com/what-is-the-difference-between-acroforms-and-xfa/) fillable-form standards, trying to install [pdftk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/) (the binary `pdf-forms` wraps) on macOS, finding [this](https://stackoverflow.com/questions/39750883/pdftk-hanging-on-macos-sierra/39814799#39814799) unpublished link, learning about the [Java rewrite](https://gitlab.com/pdftk-java/pdftk) of `pdftk` because it doesn't work on Ubuntu > 18, and trying unsuccessfully to install that on my mac -- I'm here to tell you just skip this one.
+The first approach I tried was using [pdf-forms](https://github.com/jkraemer/pdf-forms) to programmatically fill out a fillable PDF. Spoiler: this ssssuuuccckkkeedd. After far too long of trying to convert a non-fillable PDF to a fillable PDF using Libre Office, learning more than I ever cared to about [XFA and AcroForm](https://appligent.com/what-is-the-difference-between-acroforms-and-xfa/) fillable-form standards, trying to install [pdftk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/) (the binary `pdf-forms` wraps) on macOS, finding [the real version of pdftk](https://stackoverflow.com/questions/39750883/pdftk-hanging-on-macos-sierra/39814799#39814799) you need to install on stackoverflow, learning about the [Java rewrite](https://gitlab.com/pdftk-java/pdftk) of `pdftk` because the original doesn't work on Ubuntu > 18, and trying unsuccessfully to install that on my mac -- I'm here to tell you just skip this one.
 
 You gotta know when to cut bait, amirite? 🎣
 
@@ -41,7 +41,7 @@ Prawn::Document.generate("out/rectangle.pdf") do
 end
 ```
 
-Even more important to our use case of filling out a form, is `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-07-18/text.pdf" target="\_blank">this</a> PDF:
+More importantly for filling out forms, are `prawn's` text utilities. Checkout this example which generates <a href="{{ site.github.url }}/public/images/2020-07-18/text.pdf" target="\_blank">this</a> PDF:
 
 ```ruby
 Prawn::Document.generate("out/text.pdf") do
@@ -62,18 +62,17 @@ Prawn::Document.generate("out/text.pdf") do
 end
 ```
 
-Here is an image of that PDF, so we can talk about it:
+For reference, here's a screenshot of that PDF:
 
 <div class="img-bordered">
 ![text pdf as png]({{ site.github.url }}/public/images/2020-07-18/text_pdf_as_png.png)
 </div>
 
-`text_box` is the single most important method `prawn` gives us. It lets us draw a text box by specifying its top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). The third `overflow` mode in that picture, `shrink_to_fit`, is especially useful when filling out form fields on our PDFs.
+`text_box` lets us draw a text box by specifying its top left corner (`at`), its `width`, its `height`, and optionally what to do with text that doesn't fit (`overflow`). The third `overflow` mode in that picture, `shrink_to_fit`, is especially useful when filling out form fields on a PDF.
 
 ### combine_pdf
 
-Unsurprisingly, `combine_pdf` let's us...combine PDFs. Ultimately, we'll use it take a PDF of all the form's content, generated with `prawn`, and lay it on top of the original PDF form.
-Here's an example of doing something similar, but instead of filling out the form, we draw a grid on it (<a href="{{ site.github.url }}/public/images/2020-07-18/osha_form_300_with_grid.pdf" target="\_blank">the PDF</a>):
+Unsurprisingly, `combine_pdf` let's us...combine PDFs. Ultimately, we'll use it take a PDF of all the form's content, generated with `prawn`, and lay it on top of the original PDF form. Here's an example of doing something similar, but instead of filling out the form, we draw a grid on it (<a href="{{ site.github.url }}/public/images/2020-07-18/osha_form_300_with_grid.pdf" target="\_blank">the PDF</a>):
 
 ```ruby
 # make a grid sheet
@@ -114,15 +113,15 @@ form.pages[0] << grid
 form.save("out/osha_form_300_with_grid.pdf")
 ```
 
-This isn't a pointless example -- we're going to use that grid to help us properly lay out text boxes when we fill out the form for real. That's not filling out a form, but that's all the tools -- `prawn` and `combine_pdf` 🤝 -- put together.
+This isn't a pointless example. We can use a grid like that to help us properly lay out text boxes when we fill out the form for real. Also, while we haven't filled out the form per se, that example shows everything you need for doing so yourself. Instead of drawing lines and text boxes for your axis labels you would draw text boxes for your data fields, but that's all the tools -- `prawn` and `combine_pdf` 🤝 -- put together.
+
+If all we wanted to do was showcase the methodology, we'd be done, but where's the fun in that? Let's do the whole form!
 
 ## Filling out a PDF form for reals 📝
 
 ### Hold up a second!
 
-I wanna look at a more complete example for filling out some OSHA forms. I think there's some interesting Ruby involved, but there's arguments for it being overcomplicated. Past this section, we're really just having fun with Ruby in the context of filling out a PDF.
-
-You don't have to keep reading -- that grid example has everything you need. At the end of the day, all you need are:
+You don't have to keep reading -- that grid example has everything you need. Past here, we're mostly just having fun with Ruby in the context of filling out a PDF. At the end of the day, all you need are:
 
 1. Calls to `prawn`'s text_box method with options for where to draw it on the page like so:
 
