@@ -84,6 +84,7 @@ code {
       (min-width: 58em) {
   .img-scaled { text-align: center; }
   .img-scaled img { display: inline; margin-bottom: 0; }
+  .img-scaled.height-down-25 img { height: 25%; }
   .img-scaled.down-50 img { height: 50%; width: 50%; }
   .img-scaled.down-80 img { height: 80%; width: 80%; }
 }
@@ -128,7 +129,7 @@ code {
 }
 
 .message .message-body p:last-child,
-.message .message-body div.highlight:last-child {
+.message .message-body div.highlighter-rouge:last-child > div.highlight {
   margin-bottom: 0;
 }
 
