@@ -4,6 +4,12 @@ title: 'Pagination and Scroll Restoration with Turbolinks'
 published: true
 ---
 
+<div class="message">
+  <div class="message-body">
+This solution has issues we try to fix in [part two]({{ site.github.url }}/2020/07/24/pagination-and-scroll-restoration-with-turbolinks-without-cookies/). Still a useful read for context, though.
+  </div>
+</div>
+
 We've been hearing for a while now that  [HEY](https://hey.com/) would (and did) double down on the frontend architecture Rails and Basecamp are known for -- server-rendered-"HTML-over-the-wire", sprinkles of JavaScript instead of SPA frameworks, no JSON APIs, Turbolinks -- something quite against the grain of "modern" web development.
 
 So shortly after HEY started handing out invitations, JavaScript-Twitter took to...well, Twitter...to [lend](https://twitter.com/AdamRackis/status/1274435507317948416) [their](https://twitter.com/devongovett/status/1275898774422880257) [critiques](https://twitter.com/mahemoff/status/1276673603065442305). Here's one that stuck with me:
@@ -287,9 +293,9 @@ module Pagination
     before_action { session.delete(:pagination) if request.full_page_refresh? }
   end
 
-  def paginates(collection, options = {})
+  def paginates(collection)
     Paginator.new(self, collection).
-      then { |paginator| [paginator.pagy, paginator.items]}
+      then { |paginator| [paginator.pagy, paginator.items] }
   end
 end
 ```
@@ -428,4 +434,4 @@ Is it more difficult than doing the same in React? I don't think so. The logic f
 
 Is it impossible? Definitely not.
 
-Code can be found [here](https://github.com/gkemmey/turbolinks_preserve_scroll).
+Code can be found [here](https://github.com/gkemmey/turbolinks_preserve_scroll/tree/f51f93c31cd86dcd797fb4d13836e5fd12b119a5).
