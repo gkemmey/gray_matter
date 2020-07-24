@@ -162,7 +162,7 @@ With that, we can load more, our URL updates, and we can restore scroll when you
 
 ### Refreshing should...well...start fresh
 
-At this point, we've lost something we had in the old version: if you refresh your inbox we should forget pagination and scroll, and start back tat the top. Now that we're tracking pagination state in the URL, when you click refresh, you get results up to that page.
+At this point, we've lost something we had in the old version: if you refresh your inbox we should forget pagination and scroll, and start back at the top. Now that we're tracking pagination state in the URL, when you click refresh, you get results up to that page.
 
 {:.img-scaled.down-50}
 ![Refreshing doesn't actually refresh]({{ site.github.url }}/public/images/2020-07-24/refreshing_keeps_the_pagination.gif)
@@ -329,7 +329,17 @@ Right you are!
 
 ![Working with multiple tabs]({{ site.github.url }}/public/images/2020-07-24/multiple_tabs.gif)
 
-I think that's everything. Opening it for re-review, anyway.
+### What about the history stack is not unique by URL so you can't save scroll positions by URL?
+
+Turbolinks is (mostly) bailing us out here. Turbolinks saves the scroll position before navigating away and restores that position when it loads the page from cache -- i.e. you click the browser's back button.
+
+![Turbolinks restoring the scroll with the back button]({{ site.github.url }}/public/images/2020-07-24/turbolinks_handles_restoring_scroll_with_the_back_button.gif)
+
+We scroll to #22, open it, click "Back", scroll to #44, and open it. Now, we click the back button, we get that cached page scrolled to #44. Click the back button twice more, we get that other cached page scrolled to #22.
+
+I'm not sure scroll is always restored if you mix using the browser's back button and our app's back link. That said, if Turbolinks has a scroll position and we don't, surely we could go get it. Alternatively, we could change our `savedScrolls` object. What if it was a stack per URL? Then to restore scroll, we pop the last value we had for that URL (rather than the only value we have for that URL).
+
+Anyway, I think that's everything. Opening it for re-review, anyway.
 
 ### Conclusion
 
